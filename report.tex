@@ -389,9 +389,9 @@ three logic cells:
 \draw[wire] (l1a.south) -- (busJ);
 \fill[accentblue] (busJ) circle (1.3pt);
 \draw[wire] (busJ) -- (4.5,-4.2) -- (l2a.north);
-\draw[wire] (busJ) -- (4.5,-4.2) -- (5.7,-4.2) arc (180:0:0.18) -- (7.5,-4.2) -- (l2b.north west);
+\draw[wire] (busJ) -- (4.5,-4.2) -- (5.7,-4.2) arc (180:0:0.18) -- (6.7,-4.2) -- (6.7,-6.6) -- (l2b.west);
 \node[siglabel] at (3, -4.2) {$G_{0:1}$};
-\node[siglabel] at (6.9, -4.45) {$G_{0:1}$};
+\node[siglabel, anchor=east] at (6.6, -5.4) {$G_{0:1}$};
 
 % PG2's second tap (its first tap already went to the Black cell above) --
 % enters l2a from the side (east), so it never approaches from above and
@@ -399,7 +399,10 @@ three logic cells:
 \draw[wire] (pg2.south) -- (6,-6.6) -- (l2a.east);
 \node[siglabel] at (6.4,-3.4) {$P_2,G_2$};
 
-\draw[wire] (l1b) -- (l2b.north east) node[siglabel, pos=0.5, right] {$P_{2:3},G_{2:3}$};
+% Black's tap enters l2b straight from above (they share an x-coordinate --
+% no jog needed), leaving the west side free for the G[0:1] bus above, so
+% neither wire has to bend at the last moment right at the node.
+\draw[wire] (l1b) -- (l2b.north) node[siglabel, pos=0.4, right] {$P_{2:3},G_{2:3}$};
 
 \node[font=\scriptsize\bfseries\color{accentblue}] at (4.5,-7.55) {$C_3=G_{0:2}$};
 \node[font=\scriptsize\bfseries\color{accentblue}] at (7.5,-7.55) {$C_4=C_{OUT}$};
