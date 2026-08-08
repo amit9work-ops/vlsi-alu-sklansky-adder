@@ -1,0 +1,915 @@
+\documentclass[11pt, a4paper]{article}
+
+%=====================================================================
+% PACKAGES
+%=====================================================================
+\usepackage[top=0.9in, bottom=0.9in, left=0.85in, right=0.85in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc, shapes.geometric, decorations.pathreplacing}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{float}
+
+%=====================================================================
+% COLORS  (categorical palette: slot1 blue / slot2 orange, status green)
+%=====================================================================
+\definecolor{accentblue}{HTML}{184F95}
+\definecolor{accentblueLight}{HTML}{2A78D6}
+\definecolor{accentorange}{HTML}{EB6834}
+\definecolor{statusgood}{HTML}{0CA30C}
+\definecolor{inkprimary}{HTML}{0B0B0B}
+\definecolor{inksecondary}{HTML}{52514E}
+\definecolor{inkmuted}{HTML}{898781}
+\definecolor{gridline}{HTML}{E1E0D9}
+\definecolor{panelbg}{HTML}{F4F7FB}
+\definecolor{panelborder}{HTML}{184F95}
+
+%=====================================================================
+% HYPERLINKS
+%=====================================================================
+\hypersetup{
+    colorlinks  = true,
+    linkcolor   = accentblue,
+    urlcolor    = accentblue,
+    citecolor   = accentblue,
+    pdfauthor   = {Amit Damari, Tomer Zahuri, Tal Franco, Israel Elmaliach},
+    pdftitle    = {VLSI ALU Project -- Sklansky Adder -- Group 007}
+}
+
+%=====================================================================
+% SECTION FORMATTING
+%=====================================================================
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{accentblue}}
+  {\thesection}{0.6em}{}[{\color{accentblue}\titlerule[1.1pt]}]
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{accentblue}}
+  {\thesubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{18pt}{8pt}
+\titlespacing*{\subsection}{0pt}{12pt}{4pt}
+
+\setlist[itemize]{leftmargin=1.3em, topsep=2pt, itemsep=2pt, parsep=0pt}
+\setlist[enumerate]{leftmargin=1.5em, topsep=2pt, itemsep=2pt, parsep=0pt}
+
+%=====================================================================
+% HEADER / FOOTER
+%=====================================================================
+\pagestyle{fancy}
+\setlength{\headheight}{22pt}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.6pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{gridline}\leaders\hrule height \headrulewidth\hfill}}
+\fancyhead[L]{\small\color{inksecondary} VLSI ALU Project -- Sklansky Adder}
+\fancyhead[R]{\small\color{inksecondary} Group 007}
+\fancyfoot[C]{\small\color{inkmuted}\thepage}
+
+\captionsetup{font=small, labelfont={bf,color=accentblue}, margin=1em}
+
+%=====================================================================
+% HELPERS
+%=====================================================================
+\newcommand{\sig}[1]{\texttt{#1}}
+\newcommand{\fig}[3]{%
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=#2\linewidth]{assets/#1}
+  \caption{#3}
+\end{figure}}
+
+\graphicspath{{./}}
+
+%=====================================================================
+\begin{document}
+
+%=====================================================================
+% TITLE PAGE
+%=====================================================================
+\begin{titlepage}
+\newgeometry{top=0in, bottom=0in, left=0in, right=0in}
+\centering
+
+\begin{tikzpicture}[remember picture, overlay]
+  \fill[accentblue] (current page.north west) rectangle ([yshift=-3.6cm]current page.north east);
+  \node[anchor=north, text width=17cm, align=center, yshift=-1.15cm] at (current page.north) {
+    {\color{white}\fontsize{34}{40}\selectfont\bfseries VLSI ALU Project}\\[4pt]
+    {\color{white!85!accentblue}\Large Part B -- Final Stage \(\cdot\) Group 007}
+  };
+
+  \node[anchor=north] at ([yshift=-4.3cm]current page.north) {
+    \begin{minipage}{14.5cm}
+      \centering
+      \includegraphics[width=14.5cm]{assets/layout_zoom2.png}
+    \end{minipage}
+  };
+  \node[anchor=north, font=\footnotesize\color{inkmuted}] at ([yshift=-9.1cm]current page.north)
+    {Standard-cell layout of the 4-bit Sklansky adder -- Cadence Virtuoso};
+
+  \node[anchor=north, text width=15cm, align=center] at ([yshift=-10.2cm]current page.north) {
+    {\Large\bfseries\color{accentblue} A 4-bit ALU Built on a Sklansky Parallel-Prefix Adder}\\[6pt]
+    {\normalsize\color{inksecondary} Full-custom schematic capture, physical layout, DRC/LVS
+    signoff and post-layout timing characterization in a 45\,nm-class standard-cell
+    library, using Cadence Virtuoso and Spectre.}
+  };
+
+  \node[anchor=north] at ([yshift=-14.6cm]current page.north) {
+    \begin{tikzpicture}
+      \draw[accentblue, line width=0.8pt] (0,0) -- (11,0);
+    \end{tikzpicture}
+  };
+
+  \node[anchor=north, text width=12cm, align=left] at ([yshift=-15.3cm]current page.north) {
+    {\small\color{inkmuted}\textbf{SUBMITTED BY}}\\[4pt]
+    {\normalsize Amit Damari \hfill 326631249}\\
+    {\normalsize Tomer Zahuri \hfill 211543277}\\
+    {\normalsize Tal Franco \hfill 322402207}\\
+    {\normalsize Israel Elmaliach \hfill 206926602}
+  };
+
+  \fill[accentblue] (current page.south west) rectangle ([yshift=0.5cm]current page.south east);
+\end{tikzpicture}
+
+\end{titlepage}
+\restoregeometry
+
+%=====================================================================
+% EXECUTIVE SUMMARY + RESULTS DASHBOARD
+%=====================================================================
+\section*{Executive Summary}
+\addcontentsline{toc}{section}{Executive Summary}
+
+This report documents the full-custom design of a 4-bit Arithmetic Logic Unit
+(ALU) computing $Y = A + B - C$, built around a 4-bit \textbf{Sklansky
+parallel-prefix adder} for high-speed addition and a two's-complement
+subtractor that reuses the same adder hardware. The design was carried
+end-to-end through schematic capture, gate-level sizing, physical layout,
+and signoff verification (DRC and LVS, both clean) in Cadence Virtuoso, and
+characterized in Spectre across two supply corners (1.2\,V and 0.9\,V) for
+setup time, critical-path delay, and maximum clock frequency. A second,
+independent exercise (Part 2) explores clock generation with a CMOS ring
+oscillator, studying how inverter sizing, RC loading, and output loading
+trade off against oscillation frequency.
+
+\medskip
+\begin{center}
+\begin{tikzpicture}
+\node[draw=panelborder, line width=1pt, fill=panelbg, rounded corners=4pt,
+      inner sep=12pt, text width=15.4cm] {
+\begin{minipage}{15.4cm}
+{\bfseries\color{accentblue}\large Results at a Glance}\\[8pt]
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{7.1cm}@{\hspace{6pt}}p{7.1cm}@{}}
+\textcolor{statusgood}{\textbf{\large\checkmark}}\ \textbf{DRC} -- clean, 0 violations &
+\textcolor{statusgood}{\textbf{\large\checkmark}}\ \textbf{LVS} -- clean, netlist match \\[10pt]
+\textbf{Adder cell area:} 52.29\,\textmu m\textsuperscript{2} (9 AND + 4 OR + 8 XOR) &
+\textbf{Layout utilization:} \(\approx\)97.5\% of the padded (\(+20\%\)) estimate\\[10pt]
+\textbf{f\textsubscript{max} @ 1.2\,V:} \textbf{4.33\,GHz} &
+\textbf{f\textsubscript{max} @ 0.9\,V:} \textbf{2.05\,GHz} (corrected, see \S\ref{sec:timing})\\[10pt]
+\textbf{Setup time:} \(\approx\)20\,ps @ 1.2\,V / 44\,ps @ 0.9\,V &
+\textbf{Rise/fall times:} all signals $<$ 50\,ps at both corners
+\end{tabular}
+\end{minipage}
+};
+\end{tikzpicture}
+\end{center}
+
+\bigskip
+\noindent\textit{A note on this revision: this report has been re-typeset and
+lightly corrected from the group's original submission. A cycle-time
+arithmetic slip at the 0.9\,V corner has been fixed (see \S\ref{sec:timing}
+for the original vs. corrected numbers), figures have been numbered and
+captioned throughout, and one area figure with inconsistent decimal
+notation has been normalized and flagged for verification against the
+original Virtuoso area report (\S\ref{sec:floorplan}). No underlying design,
+schematic, or layout work has changed -- only the write-up.}
+
+\clearpage
+\tableofcontents
+\clearpage
+
+%=====================================================================
+\section{Introduction}
+%=====================================================================
+
+\subsection{Project Library}
+The Virtuoso schematic/layout cells for this project are split across two
+per-member libraries:
+
+\smallskip
+\noindent\textbf{Library owner: \sig{tomerzahuri}}
+\begin{itemize}
+  \item \sig{4bit\_adder\_pg}, \sig{4bit\_adder\_gray\_cell}, \sig{4bit\_adder\_black\_cell}
+  \item \sig{4bit\_register}, \sig{5bit\_register}, \sig{6bit\_register}
+  \item \sig{Adder}, \sig{Adder\_tb}, \sig{SUBTRACTOR}, \sig{Subtractor\_tb}
+  \item \sig{ALU}, \sig{ALU\_tb}
+  \item \sig{Tlogiccq\_meas}, \sig{Tlockq\_sub\_meas}, \sig{Tsetup\_meas}
+\end{itemize}
+
+\noindent\textbf{Library owner: \sig{talfranco}} -- Part 2 ring-oscillator cells.
+
+\subsection{Assignment Parameters}
+Per the course specification, $X$ is defined as the sum of the last digits
+of the student IDs of all group members:
+\[
+9\ (\text{326631}\mathbf{249}) + 7\ (\text{211543}\mathbf{277}) +
+7\ (\text{322402}\mathbf{207}) + 2\ (\text{206926}\mathbf{602}) = 25
+\]
+which maps, via the course's assignment table, to $X = 25 \rightarrow Y = 2$.
+Variant $Y = 2$ requires implementing an ALU using a \textbf{Sklansky adder},
+with the following specification:
+
+\begin{itemize}
+  \item \textbf{Logical inputs:} $A[3{:}0]$, $B[3{:}0]$, $C[3{:}0]$, each 4 bits, each latched into its own input register.
+  \item \textbf{Output:} a single output $Y[4{:}0]$\footnote{As implemented, the final output register is 6 bits wide (\sig{6bit\_register}) to accommodate the full signed range of $A+B-C$ -- see \S\ref{sec:overview}.}, driven from a register.
+  \item \textbf{Encoding:} all values are two's-complement signed integers.
+  \item \textbf{Internal register:} the design holds an internal register $X$ where $\langle X \rangle = \langle A \rangle + \langle B \rangle$.
+  \item \textbf{Operations:} $\mathrm{ADD}: \langle X \rangle = \langle A \rangle + \langle B \rangle$, \quad $\mathrm{SUB}: \langle Y \rangle = \langle X \rangle - \langle C \rangle$.
+  \item \textbf{Supply:} a single nominal $V_{DD} = 1.2\,\mathrm{V}$, referenced to ground.
+\end{itemize}
+
+%=====================================================================
+\section{ALU Design Overview}
+\label{sec:overview}
+%=====================================================================
+
+The ALU computes $Y = A + B - C$ from three 4-bit two's-complement inputs,
+producing a 6-bit result stored in a register. Figure~\ref{fig:alu-dataflow}
+shows the top-level dataflow.
+
+\begin{enumerate}
+  \item \textbf{Addition:} $A + B \rightarrow$ latched into a 5-bit register.
+        The extra bit absorbs the addition overflow -- e.g.\ the largest
+        possible positive sum, $0111_2 + 0111_2 = 1110_2$ (7+7=14), needs
+        5 bits to be represented correctly in two's complement.
+  \item \textbf{Subtraction:} $(A+B) - C \rightarrow$ latched into a 6-bit
+        register, again sized to absorb the result's overflow/sign growth.
+  \item \textbf{Overflow handling:} every stage's register is one bit wider
+        than the strict minimum, so intermediate results never wrap silently.
+\end{enumerate}
+
+\textbf{Key components:}
+\begin{itemize}
+  \item \textbf{Sklansky adder} -- a parallel-prefix adder used for both the
+        addition and (via two's-complement reuse) the subtraction, chosen for
+        its logarithmic-depth carry chain.
+  \item \textbf{Subtractor} -- built from the same adder, using two's-complement
+        inversion of the subtrahend (see \S\ref{sec:impl-adder-sub}).
+  \item \textbf{Registers} -- every register is built from per-bit D flip-flops,
+        clocked synchronously.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=6mm and 10mm,
+  reg/.style={draw=accentblue, fill=panelbg, rounded corners=2pt, minimum width=1.5cm, minimum height=0.8cm, font=\footnotesize},
+  op/.style={draw=accentblue, fill=accentblue!12, rounded corners=2pt, minimum width=1.1cm, minimum height=1.1cm, font=\bfseries\large\color{accentblue}},
+  lbl/.style={font=\scriptsize\color{inksecondary}},
+  ->, >=Latex, thick, accentblue
+]
+\node[reg] (Areg) {\sig{A} reg};
+\node[reg, below=of Areg] (Breg) {\sig{B} reg};
+\node[reg, below=of Breg] (Creg) {\sig{C} reg};
+
+\node[op, right=of Areg, yshift=-4mm] (add) {$+$};
+\node[reg, right=16mm of add, yshift=-4mm] (Xreg) {\sig{X} reg};
+\node[op, right=14mm of Xreg] (sub) {$-$};
+\node[reg, right=16mm of sub] (Yreg) {\sig{Y} reg};
+
+\draw (Areg) -- (add);
+\draw (Breg) -| (add);
+\draw (add) -- node[lbl, above]{5} (Xreg);
+\draw (Xreg) -- node[lbl, above]{5} (sub);
+\draw (Creg) -| (sub);
+\draw (sub) -- node[lbl, above]{6} (Yreg);
+\draw (Yreg) -- ++(1.1,0) node[right, font=\bfseries\color{inkprimary}]{$Y$};
+
+\node[lbl, left=1mm of Areg] {$A[3{:}0]$};
+\node[lbl, left=1mm of Breg] {$B[3{:}0]$};
+\node[lbl, left=1mm of Creg] {$C[3{:}0]$};
+\end{tikzpicture}
+\caption{ALU top-level dataflow: $A$ and $B$ are latched and added by the
+Sklansky adder into a 5-bit register $X$; $C$ is latched and subtracted from
+$X$ by the reused adder/subtractor, producing the final 6-bit result $Y$.
+(Redrawn for clarity; the original schematic capture is Figure~\ref{fig:alu-top-schematic}.)}
+\label{fig:alu-dataflow}
+\end{figure}
+
+%=====================================================================
+\section{Sklansky Adder: Theory}
+%=====================================================================
+
+\subsection{Core Structure}
+The Sklansky adder is a \textbf{parallel prefix tree} that computes every
+carry $C_i$ in logarithmic time, rather than rippling a carry bit-by-bit
+through the whole word as a naive ripple-carry adder does. It is built from
+three logic cells:
+
+\begin{itemize}
+  \item \textbf{PG cell} -- generates, per bit, the \emph{propagate} signal
+        $P_i = A_i \oplus B_i$ and the \emph{generate} signal $G_i = A_i \cdot B_i$.
+  \item \textbf{Black cell} -- combines two adjacent $(G,P)$ group signals into one:
+        \[
+          G_{\mathrm{group}} = G_{\mathrm{left}} + \left(P_{\mathrm{left}} \cdot G_{\mathrm{right}}\right),
+          \qquad
+          P_{\mathrm{group}} = P_{\mathrm{left}} \cdot P_{\mathrm{right}}
+        \]
+  \item \textbf{Gray cell} -- an optimized black cell that only produces the
+        group \emph{generate} signal $G_{\mathrm{group}}$, omitting the group
+        propagate output where it will never be needed downstream. This
+        trims area and wiring in the stages where only the final carry is required.
+\end{itemize}
+
+\noindent\textbf{Carry recurrence:} \(\displaystyle C_{i+1} = G_i + P_i \cdot C_i\)
+
+\noindent\textbf{Final sum:} \(\displaystyle S_i = P_i \oplus C_{i-1}\)
+
+\subsection{Why Sklansky}
+\begin{itemize}
+  \item \textbf{Speed:} $O(\log n)$ carry-propagation delay, versus $O(n)$ for a ripple-carry adder.
+  \item \textbf{Area efficiency:} fewer wires than a Kogge-Stone adder, at the cost of slightly more fan-out per stage; still faster than a Brent-Kung adder for a given cell count.
+  \item \textbf{Scalability:} a good fit for the 4-bit width used here, where the logarithmic-depth tree is only two levels deep.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  scale=0.92, transform shape,
+  pg/.style={draw=accentblue, fill=accentblue!10, rounded corners=2pt, minimum width=1.0cm, minimum height=0.7cm, font=\scriptsize},
+  gr/.style={draw=accentorange, fill=accentorange!12, rounded corners=2pt, minimum width=1.0cm, minimum height=0.7cm, font=\scriptsize},
+  bk/.style={draw=inkprimary, fill=inkmuted!18, rounded corners=2pt, minimum width=1.0cm, minimum height=0.7cm, font=\scriptsize},
+  ->, >=Latex, accentblue
+]
+\foreach \i/\x in {0/0, 1/2, 2/4, 3/6} {
+  \node[pg] (pg\i) at (\x, 0) {PG\i};
+  \node[font=\scriptsize\color{inksecondary}] at (\x, 0.62) {$A_\i,B_\i$};
+}
+\node[gr] (l1a) at (2, -1.4) {Gray};
+\node[bk] (l1b) at (6, -1.4) {Black};
+\draw (pg0) -- (l1a); \draw (pg1) -- (l1a);
+\draw (pg2) -- (l1b); \draw (pg3) -- (l1b);
+
+\node[gr] (l2a) at (4, -2.8) {Gray};
+\node[gr] (l2b) at (6, -2.8) {Gray};
+\draw (l1a) -- (l2a); \draw (pg2) to[out=200,in=90] (l2a);
+\draw (l1a) to[out=-20,in=140] (l2b); \draw (l1b) -- (l2b);
+
+\node[font=\scriptsize\color{inksecondary}] at (0,-2.8) {$C_0$};
+\node[font=\scriptsize\color{inksecondary}] at (2,-2.8) {$C_1$};
+\node[font=\scriptsize\color{inksecondary}] at (4,-3.4) {$C_2$};
+\node[font=\scriptsize\color{inksecondary}] at (6,-3.4) {$C_3$};
+\draw[-, dashed, inkmuted] (0,-2.55) -- (0,-2.2);
+\draw[-, dashed, inkmuted] (2,-2.05) -- (2,-1.75);
+\end{tikzpicture}
+\caption{Simplified 4-bit Sklansky prefix tree: leaf PG cells generate
+per-bit $(P,G)$; two levels of Gray/Black cells combine them into the
+group carries $C_1$--$C_3$ in $\log_2(4)=2$ stages. (Conceptual redraw;
+the group's actual gate-level netlist is in \S\ref{sec:impl-adder-sub}
+and Figure~\ref{fig:floorplan-gatelevel}.)}
+\label{fig:sklansky-tree}
+\end{figure}
+
+%=====================================================================
+\section{Floor Plan and Area Budget}
+\label{sec:floorplan}
+%=====================================================================
+
+\fig{floorplan_gatelevel}{0.85}{Cell-level floor plan of the 4-bit Sklansky
+adder: two rows of PG cells feed a row of Gray/Black cells, which feed the
+final XOR row that produces the sum bits.\label{fig:floorplan-gatelevel}}
+
+\textbf{Gate-level implementation:}
+\begin{itemize}
+  \item 4 $\times$ PG cell -- each built from 1 AND gate + 1 XOR gate.
+  \item 3 $\times$ Gray cell -- each built from 1 AND gate + 1 OR gate.
+  \item 1 $\times$ Black cell -- built from 2 AND gates + 1 OR gate.
+  \item 4 $\times$ XOR gate -- final sum-bit computation.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\rowcolor{accentblue!10}
+\textbf{Cell} & \textbf{Count} & \textbf{Area (\textmu m\textsuperscript{2})} & \textbf{Total (\textmu m\textsuperscript{2})} \\
+\midrule
+AND & 9 & 2.128 & 19.152 \\
+OR  & 4 & 1.748 & 6.992 \\
+XOR & 8 & 3.268 & 26.144 \\
+\midrule
+\textbf{Total} & \textbf{21} & -- & \textbf{52.288} \\
+\bottomrule
+\end{tabular}
+\caption{Adder gate-count and area budget (9 AND from 4 PG + 3 Gray + 2 Black; 4 OR from 3 Gray + 1 Black; 8 XOR from 4 PG + 4 final-sum).}
+\end{table}
+
+The raw gate-level area sums to \textbf{52.288\,\textmu m\textsuperscript{2}}.
+The initial planning estimate padded this by an additional $\sim$20\% to
+account for routing between blocks. Once the layout was completed, the
+measured utilized area came out slightly lower than that padded estimate --
+\textbf{$\approx$97.5\%} of it -- because several VSS power rails ended up
+shared between adjacent blocks rather than duplicated per block.
+
+\emph{Note on this figure: the original report gave this measured area as
+``50,963.8\,\textmu m\textsuperscript{2}'', using a decimal comma inconsistent
+with the rest of the document and off by roughly 1000$\times$ from the scale
+established by the 52.288\,\textmu m\textsuperscript{2} gate total one line
+above it. Read literally as a decimal-point placement error, the intended
+figure is almost certainly \textbf{$\approx$50.96\,\textmu m\textsuperscript{2}}
+(consistent with ``slightly lower'' than the padded estimate) -- this is the
+value used above, but it should be checked against the original Virtuoso
+area report before being treated as final.}
+
+%=====================================================================
+\section{Circuit Implementation}
+\label{sec:impl-adder-sub}
+%=====================================================================
+
+\subsection{Top-Level ALU}
+The ALU is composed of the input/output registers, the adder, and the
+subtractor, connected as in Figure~\ref{fig:alu-dataflow}.
+
+\fig{alu_top_schematic}{0.95}{Top-level ALU schematic capture: $A$, $B$, $C$
+registers feed the adder and subtractor blocks, producing the final
+registered output $Y$.\label{fig:alu-top-schematic}}
+
+To implement the addition, the adder uses the Sklansky algorithm described
+in \S3, chosen specifically to reduce the carry-propagation delay compared
+to a ripple-carry design.
+
+\subsection{Adder}
+\fig{adder_schematic}{0.98}{4-bit Sklansky adder netlist: four \sig{4bit\_adder\_pg}
+cells generate per-bit $(P,G)$, which feed a tree of \sig{4bit\_adder\_gray\_cell}
+and \sig{4bit\_adder\_black\_Cell} instances, terminating in the final-sum
+XOR row.\label{fig:adder-schematic}}
+
+\subsection{Subtractor}
+\fig{subtractor_schematic}{0.98}{Subtractor netlist: each bit of the
+subtrahend is inverted before entering the same adder structure, with the
+carry-in tied high to complete the two's-complement negation
+(+1).\label{fig:subtractor-schematic}}
+
+The subtractor is a clean example of hardware reuse: it performs
+$X - C$ using the \emph{exact same} adder structure as the addition stage.
+Two's-complement subtraction is implemented by inverting every bit of $C$
+and feeding the inverted value, together with $X$, into the adder -- the
+adder's carry-in supplies the ``$+1$'' that completes the negation.
+
+Because the operands are constrained to a signed 4-bit range, this can
+overflow: the result becomes too large or too small to represent in the
+target bit width. Overflow is detected by comparing the carry into the
+most-significant bit against the carry out of it -- if the two differ, the
+result is invalid. Equivalently, overflow has occurred whenever two
+positive operands sum to a negative result, or two negative operands sum to
+a positive one; either case flips the expected sign and signals that the
+result cannot be trusted.
+
+\subsection{Standard Cells}
+\label{sec:cells}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{assets/pg_cell.png}
+\caption{PG cell: $P = A \oplus B$ (top, XOR2X1), $G = A \cdot B$ (bottom, AND2X2).}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{assets/gray_cell.png}
+\caption{Gray cell: computes $G_{\mathrm{group}} = (A \cdot B) + C$ -- i.e.\
+$G_{\mathrm{group}} = G_{\mathrm{left}} + (P_{\mathrm{left}} \cdot G_{\mathrm{right}})$
+from AND2X2 + OR2X1, omitting the group-propagate output.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{assets/black_cell.png}
+\caption{Black cell: produces both outputs -- $Y = A \cdot B$ (group
+propagate) and $Z = (C \cdot B) + D$ (group generate) -- from two AND2X2
+gates and one OR2X1.}
+\end{figure}
+
+\subsection{Registers}
+All registers are built from per-bit \sig{DFFQX1} D flip-flops, clocked
+synchronously off the shared \sig{CLK}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.62\linewidth]{assets/reg_4bit.png}
+\caption{4-bit register -- one \sig{DFFQX1} per bit of $A$, $B$, or $C$.}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.62\linewidth]{assets/reg_5bit.png}
+\caption{5-bit register -- latches the adder's output $X$.}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\linewidth]{assets/reg_6bit.png}
+\caption{6-bit register -- latches the final ALU output $Y$.}
+\end{figure}
+
+Combining PG, Gray, and Black cells into a prefix tree lets the adder
+compute every carry in parallel, avoiding the accumulating delay of a
+ripple-carry chain.
+
+%=====================================================================
+\section{Physical Layout}
+%=====================================================================
+\emph{The physical layout below covers the adder only; the subtractor
+reuses the same instantiated cells.}
+
+\fig{adder_floorplan_redlines}{0.95}{Floor plan of the adder: two rows of
+\sig{4bit\_adder\_pg} / \sig{4bit\_adder\_gray\_cell} / \sig{4bit\_adder\_black\_Cell}
+cells, followed by the XOR2X1 sum-bit row.}
+
+\fig{adder_layout_screenshot}{0.95}{Full adder layout in Virtuoso Layout Suite XL.}
+
+\fig{layout_zoom1}{0.95}{Layout, zoomed in -- routing detail across the PG/Gray/Black cell boundary.}
+
+\fig{layout_zoom2}{0.95}{Layout, zoomed in further -- metal and via detail on the standard-cell rows.}
+
+\fig{layout_zoom3}{0.95}{Layout, zoomed in to transistor-level detail, showing the \sig{out\_gray} and \sig{out\_black} internal nets.}
+
+%=====================================================================
+\section{Verification: DRC \& LVS}
+%=====================================================================
+
+Design Rule Checking (DRC) verifies the physical integrity of the layout --
+confirming that component placement and wire routing satisfy the
+fabrication process's geometric rules (minimum spacing, width, enclosure,
+etc.). Layout-Versus-Schematic (LVS) checking extracts the actual
+transistor-level netlist from the layout and compares it against the
+original schematic, confirming that every component and every pin
+connection (the netlist) matches exactly. Both checks passed cleanly.
+
+\fig{lvs_check}{0.92}{LVS run: schematic and layout netlists match, 0 errors.}
+\fig{drc_check1}{0.92}{DRC run, screen 1/2: rule-check summary.}
+\fig{drc_check2}{0.92}{DRC run, screen 2/2: ``Design Rule Check Finished Normally,'' 0 total DRC results.}
+
+%=====================================================================
+\section{Functional Verification}
+%=====================================================================
+
+\subsection{Adder}
+The adder was verified first, in isolation, against a dedicated testbench.
+
+\fig{adder_tb_schematic}{0.85}{Adder testbench: piecewise-linear sources drive $A$ and $B$; the adder's $S$ and $C\_OUT$ outputs are probed.}
+\fig{adder_tb_waveform}{0.85}{Adder transient response: $C\_OUT$ and $C[3{:}0]$ track the expected sum of the stepped $A$ and $B$ inputs. (\sig{C} here is a convenience bus for the waveform display, not the ALU's actual carry-out signal.)}
+
+\subsection{Subtractor}
+\fig{subtractor_tb_schematic}{0.85}{Subtractor testbench.}
+\fig{subtractor_tb_waveform}{0.85}{Subtractor transient response: $Y[4{:}0]$ tracks $X - C$ across the stepped test vectors.}
+
+\subsection{Full ALU}
+With the adder and subtractor independently verified, the complete ALU was
+exercised end-to-end.
+
+\fig{alu_tb_schematic}{0.92}{Full-ALU testbench: $A$, $B$, $C$ driven by independent piecewise-linear sources, clocked by a shared \sig{CLK}.}
+\fig{alu_tb_waveform}{0.92}{Full-chip transient simulation across several clock cycles: $A$, $B$, $C$, the internal sum $X$, and the final result $Y$.}
+\fig{alu_tb_waveform_zoom}{0.92}{Zoomed transient view of the same simulation.}
+
+In the first clock cycle, $A$ and $B$ are latched into the adder. In the
+second cycle, the partial sum appears as $X$ and is immediately fed into
+the subtractor. In the third cycle, the subtraction result -- after having
+$C$ subtracted -- appears at the output as $Y$.
+
+\subsubsection{Overflow Boundary Check}
+Finally, the design was pushed to its signed-range boundaries, exercising
+both the largest and smallest representable results ($-23$ and $+22$):
+
+\fig{overflow_check_annotated}{0.85}{Overflow boundary test. The three
+annotated clock edges (translated from the original Hebrew) mark:
+\textbf{1st edge} -- $A$ and $B$ are latched into their input registers;
+\textbf{2nd edge} -- the partial sum is latched into register $X$;
+\textbf{3rd edge} -- after subtracting $C$, the final result is latched
+into $Y$.}
+
+%=====================================================================
+\section{Timing Analysis: Critical Path \& Voltage Impact}
+\label{sec:timing}
+%=====================================================================
+
+\subsection{Critical Path Analysis}
+To determine the maximum operating frequency, the critical (slowest)
+register-to-register path must be identified. For any such path, the total
+delay from one register's clock-to-Q output, through the intervening
+combinational logic, to the next register's data input, must resolve
+before that register's setup time expires:
+\[
+T_{cyc} > T_{pcq,launch} + T_{logic} + T_{setup,capture}
+\]
+
+Tracing the dataflow of Figure~\ref{fig:alu-dataflow}, there are four
+register-to-register combinational paths:
+
+\begin{enumerate}
+  \item $A\text{-reg} \rightarrow \text{Adder} \rightarrow X\text{-reg}$
+  \item $B\text{-reg} \rightarrow \text{Adder} \rightarrow X\text{-reg}$ \quad(structurally identical delay to path 1 -- symmetric adder inputs)
+  \item $X\text{-reg} \rightarrow \text{Subtractor} \rightarrow Y\text{-reg}$
+  \item $C\text{-reg} \rightarrow \text{Subtractor} \rightarrow Y\text{-reg}$
+\end{enumerate}
+
+Paths 1 and 2 share the same delay by construction, so only \textbf{three
+distinct delay values} need to be characterized. (The original report's
+wording here -- ``there exist 4 different paths,'' followed by three
+bullets and a stray, untranslated annotation -- meant exactly this; it has
+been spelled out explicitly above.)
+
+We need to determine, for each path: the combinational logic delay, the
+flip-flop's clock-to-Q (\(t_{CQ}\)) delay, and the flip-flop's setup time.
+
+\fig{alu_block_diagram_criticalpath}{0.85}{ALU dataflow, annotated with the register boundaries used for critical-path analysis.}
+
+\subsection{Setup Time}
+\label{sec:setup-time}
+Setup time -- the minimum interval the data must be stable before the
+clock's rising edge -- was measured directly in simulation, rather than
+taken from a library value.
+
+\fig{setup_tb_schematic}{0.85}{Setup-time testbench: a single \sig{DFFQX1}
+driven by independent CLK and DATA sources, with the data edge given a
+programmable negative delay relative to the clock.}
+
+The clock was driven with continuous rising/falling edges, while the data
+input received a single transition timed relative to it. By sweeping a
+\emph{negative} delay on the data edge -- i.e.\ moving the data transition
+earlier relative to the clock edge -- the point at which the flip-flop just
+barely still captures correctly identifies the setup time exactly.
+
+\fig{setup_timing_diagram}{0.55}{Definition of $T_{SETUP}$: the window
+before the clock's rising edge during which data must remain stable. If the
+output still transitions correctly, the setup requirement was met; if not,
+the delay was insufficient.}
+
+\textbf{At 1.2\,V:} the delay sweep ran coarsely from 0--200\,ps, then was
+refined to 0--50\,ps, then further refined to 15--25\,ps in 10 steps.
+Below $\sim$20\,ps the output became unstable; above it, the output
+remained stable. \textbf{Setup time $\approx$ 20\,ps.}
+
+\fig{setup_sweep_1p2v}{0.85}{Setup-time sweep at 1.2\,V: CLK, DATA, and the
+family of $Q$ traces for each swept delay, converging on $\approx$20\,ps.}
+
+\textbf{At 0.9\,V:} sweeping between $-30$ and $-50$\,ps (bisection-style),
+the hold boundary was measured at \textbf{$\approx-44$\,ps}, i.e.\ a setup
+time of $\approx$44\,ps.
+
+\fig{setup_params_panel}{0.55}{The parametric sweep configuration used to
+locate setup time: \sig{tsetup} swept via \sig{LinearStepCount} while the
+output \sig{Q} family is inspected for the first stable transition (panel
+captured with \sig{VDD}\,=\,1.2; \sig{VDD} was set to 0.9 separately for the
+0.9\,V run below).}
+\fig{setup_sweep_0p9v}{0.85}{Setup-time sweep at 0.9\,V ($V_{DD}=0.9$\,V): the boundary shifts to $\approx-44$\,ps as expected from the reduced drive strength.}
+
+In practice, the total path delay is the combinational logic delay plus the
+flip-flop's $t_{CQ}$ per stage, and in a hierarchical design this delay
+\emph{accumulates} stage to stage -- each additional block adds its own
+propagation delay on top of what came before. For the subtractor
+specifically, the critical delay is bounded by the time it takes the
+carry-out ($COUT$) to fully propagate and settle at the MSB.
+
+\subsection{Combined Logic Delay + $t_{CQ}$}
+\fig{subtractor_delay_schematic}{0.85}{Testbench for measuring the
+combined $t_{CQ} + t_{sub,max}$ delay through the subtractor's $COUT$ path.}
+
+\textbf{At 1.2\,V:}
+\[
+t_{cq} + t_{sub,max} = \tfrac{1}{2}\left(0.209\,\mathrm{ns} + 0.2143\,\mathrm{ns}\right) = 0.211\,\mathrm{ns}
+\]
+\fig{cout_delay_1p2v}{0.85}{$COUT$ delay measurement at 1.2\,V: cursors at
+30.2029\,ns and 50.2143\,ns bracket the 20\,ns clock half-period, giving
+the 0.2029/0.2143\,ns delays averaged above.}
+
+\textbf{At 0.9\,V:}
+\fig{cout_delay_0p9v_b}{0.85}{$COUT$ delay measurement at 0.9\,V ($V_{DD}=900$\,mV
+trace amplitude): cursors at 30.4431\,ns and 50.4453\,ns give the
+0.4431/0.4453\,ns delays averaged below.}
+\[
+t_{cq} + t_{sub,max} = \tfrac{1}{2}\left(0.443\,\mathrm{ns} + 0.4453\,\mathrm{ns}\right) = 0.444\,\mathrm{ns}
+\]
+
+\subsection{Maximum Frequency}
+\label{sec:fmax}
+
+\textbf{At 1.2\,V:}
+\[
+T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 20\,\mathrm{ps} + 0.211\,\mathrm{ns} = 0.231\,\mathrm{ns}
+\ \Rightarrow\ f_{max} \approx 4.33\,\mathrm{GHz}
+\]
+
+\medskip
+\begin{center}
+\begin{tikzpicture}
+\node[draw=accentorange, line width=1pt, fill=accentorange!8, rounded corners=3pt,
+      inner sep=10pt, text width=15cm] {
+\begin{minipage}{15cm}
+\raggedright
+\textbf{\color{accentorange}Correction (0.9\,V corner):} the original
+report computed
+$T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 44\,\mathrm{ps} + 0.444\,\mathrm{ns} = 0.444\,\mathrm{ns}$
+-- but $44\,\mathrm{ps} + 444\,\mathrm{ps} = 488\,\mathrm{ps}$, not $444\,\mathrm{ps}$; the
+setup time was dropped from the sum. The corrected cycle time and
+frequency are used below.
+\end{minipage}
+};
+\end{tikzpicture}
+\end{center}
+\medskip
+
+\textbf{At 0.9\,V (corrected):}
+\[
+T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 44\,\mathrm{ps} + 0.444\,\mathrm{ns} = 0.488\,\mathrm{ns}
+\ \Rightarrow\ f_{max} \approx 2.05\,\mathrm{GHz}
+\]
+\emph{(Originally reported, uncorrected: $T_{cyc}=0.444$\,ns, $f_{max}=2.252$\,GHz.)}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.72\linewidth, height=5.2cm,
+  ybar, bar width=28pt,
+  ymin=0, ymax=5,
+  ylabel={$f_{max}$ (GHz)},
+  symbolic x coords={1.2 V, 0.9 V},
+  xtick=data,
+  axis lines*=left,
+  ymajorgrids, grid style={gridline, line width=0.4pt},
+  nodes near coords, nodes near coords align={vertical},
+  every axis plot/.append style={draw=none},
+]
+\addplot[fill=accentblueLight] coordinates {(1.2 V, 4.33)};
+\addplot[fill=accentorange] coordinates {(0.9 V, 2.05)};
+\end{axis}
+\end{tikzpicture}
+\caption{Corrected maximum ALU clock frequency vs.\ supply voltage. Lower
+$V_{DD}$ roughly halves $f_{max}$, driven by reduced transistor drive
+current (see \S\ref{sec:part2-q45} and the $t = C\Delta V / I_{AVG}$
+relation below).}
+\label{fig:fmax-vdd}
+\end{figure}
+
+We can explain this trend with the familiar delay relation
+\[
+t = \frac{C \cdot \Delta V}{I_{AVG}}
+\]
+lower $V_{DD}$ reduces the average drive current $I_{AVG}$ available to
+charge/discharge the same node capacitance $C$, which lengthens every gate
+delay and pulls $f_{max}$ down.
+
+\fig{alu_full_sim_4p33ghz}{0.92}{Full ALU simulated at the 1.2\,V $f_{max}$ (4.33\,GHz, $T_{cyc}=0.21$\,ns): $A$, $B$, $X$, $C$, and $Y$ tracking correctly cycle-to-cycle.}
+
+\subsection{Rise / Fall Times}
+Rise time (10\%--90\%) and fall time (90\%--10\%) were measured for every
+signal at both corners, using \sig{riseTime(VT(SIGNAL) 0 nil <VDD> nil 10 90 nil "time")}
+and the equivalent \sig{fallTime(...)} call.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\rowcolor{accentblue!10}
+\textbf{Signal} & \textbf{Rise time, 1.2\,V} & \textbf{Rise time, 0.9\,V} \\
+\midrule
+$A[3{:}0]$, $B[3{:}0]$, $C[3{:}0]$ & $<$8\,fs & $<$8\,fs \\
+CLK & 8\,fs & 8\,fs \\
+$A$\,$Q$ (out of 4-bit reg) & $<$10.98\,ps & $<$17.48\,ps \\
+$B$\,$Q$ (out of 4-bit reg) & $<$13.35\,ps & $<$20.83\,ps \\
+$C$\,$Q$ (out of 4-bit reg) & $<$15.46\,ps & $<$23.21\,ps \\
+Adder sum $S[3{:}0]$ & $<$10.84\,ps & $<$19.07\,ps \\
+Adder $C_{OUT}$ & 10.87\,ps & 18.88\,ps \\
+$X[4{:}0]$ & $<$18.92\,ps & $<$31.08\,ps \\
+Sub. result $Y[4{:}0]$ & $<$10.87\,ps & $<$18.99\,ps \\
+Sub. $C_{OUT}$ & 10.67\,ps & 19.01\,ps \\
+$Y[5{:}0]$ & $<$14.48\,ps & $<$24.73\,ps \\
+\bottomrule
+\end{tabular}
+\caption{Rise times, both corners -- every signal clears the 50\,ps requirement with wide margin.}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\rowcolor{accentblue!10}
+\textbf{Signal} & \textbf{Fall time, 1.2\,V} & \textbf{Fall time, 0.9\,V} \\
+\midrule
+$A[3{:}0]$, $B[3{:}0]$, $C[3{:}0]$ & $<$8\,fs & $<$8\,fs \\
+CLK & 8\,fs & 8\,fs \\
+$A$\,$Q$ (out of 4-bit reg) & $<$10.98\,ps & $<$17.48\,ps \\
+$B$\,$Q$ (out of 4-bit reg) & $<$13.35\,ps & $<$20.83\,ps \\
+$C$\,$Q$ (out of 4-bit reg) & $<$15.54\,ps & $<$23.21\,ps \\
+Adder sum $S[3{:}0]$ & $<$10.84\,ps & $<$19.07\,ps \\
+Adder $C_{OUT}$ & 10.87\,ps & 18.88\,ps \\
+$X[4{:}0]$ & $<$19.00\,ps & $<$31.07\,ps \\
+Sub. result $Y[4{:}0]$ & $<$10.89\,ps & $<$18.99\,ps \\
+Sub. $C_{OUT}$ & 10.67\,ps & 19.01\,ps \\
+$Y[5{:}0]$ & $<$14.48\,ps & $<$24.73\,ps \\
+\bottomrule
+\end{tabular}
+\caption{Fall times, both corners -- likewise all clear the 50\,ps requirement.}
+\end{table}
+
+%=====================================================================
+\section{Part 2: Clock Generation -- Ring Oscillator}
+\label{sec:part2}
+%=====================================================================
+
+\emph{This section answers a numbered set of questions from the assignment
+sheet (Q4--Q7); the numbering is preserved from the original assignment
+rather than restarted at 1, so the answers stay traceable to the source
+questions.}
+
+\paragraph{Q4 -- Inverter sizing vs.\ frequency.}
+\label{sec:part2-q45}
+Increasing the size of the ring's inverters increased the oscillation
+frequency $f_{osc}$. A larger inverter has more drive strength, which
+reduces its propagation delay $t_d$; since $t_d$ and $f_{osc}$ are
+inversely related, a shorter per-stage delay raises the frequency.
+Larger inverters also drive larger capacitive loads without the delay
+penalty a smaller inverter would incur under the same load.
+
+\paragraph{Q5 -- Adding RC chains.}
+Adding RC chains between stages \emph{decreased} $f_{osc}$: the added
+series resistance and shunt capacitance increase each stage's time delay,
+since the inverters now have to charge/discharge a larger effective load.
+
+\paragraph{Q6 -- Five-inverter ring, resistance-tuned.}
+The oscillator was built from 5 \sig{INXV1} inverters, with the tuning
+resistance adjusted until the target frequency was reached.
+
+\fig{ring_osc_ring_schematic}{0.85}{Five-stage \sig{INXV1} ring oscillator: each stage is an inverter followed by a tunable series resistor and shunt capacitor to ground.}
+\fig{ring_osc_testbench_supply}{0.55}{Oscillator testbench: DC supply rails and the output load capacitor.}
+
+With more inverter stages in the ring, the frequency was noticeably easier
+to control without resorting to large resistor values.
+
+\paragraph{Q7a -- Adding an output capacitor.}
+Adding a capacitor at the output decreased the frequency, consistent with
+the same load-vs-delay relationship: $f_{osc} = 2.5\,\mathrm{MHz}$ without
+the load, dropping to $f_{osc} = 2.46\,\mathrm{MHz}$ once the capacitor was
+added.
+
+\fig{ring_osc_q7a_result}{0.85}{ADE Explorer result with the output capacitor added ($R=46.08$\,k$\Omega$, $C=1$\,pF): $f_{osc} = 2.463$\,MHz, matching the $\approx$2.46\,MHz reported above.}
+
+\paragraph{Q7b -- Signal integrity impact.}
+With the added capacitor, the rail-to-rail swing narrowed -- the output no
+longer reached the full $0$--$1.2$\,V range -- and the rising/falling edges
+softened. The \sig{INXV1} inverters simply weren't strong enough to drive
+the larger capacitive load cleanly.
+
+\paragraph{Q7c -- Switching to INXV2.}
+Replacing the inverters with the larger \sig{INXV2} cell restored full
+rail-to-rail swing and sharp edges -- in fact slightly better than the
+original no-load case -- and \emph{increased} $f_{osc}$ above the loaded
+\sig{INXV1} result, since the larger cell's higher drive strength reduced
+per-stage delay despite the added load.
+
+\fig{ring_osc_inxv2_result}{0.85}{ADE Explorer result after switching to \sig{INXV2}: full swing restored, $f_{osc} = 2.568$\,MHz.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{assets/p34_yout_plot.png}
+\caption{$Y_{OUT}$ transient waveform, baseline \sig{INXV1} ring with no output load: $f_{osc} = 2.50021$\,MHz.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{assets/p35_yout_plot.png}
+\caption{$Y_{OUT}$ transient waveform after switching to \sig{INXV2} with the output capacitor present: $f_{osc} = 2.56793$\,MHz -- higher than the loaded \sig{INXV1} case, confirming Q7c.}
+\end{figure}
+
+%=====================================================================
+\section{Conclusion}
+%=====================================================================
+
+The ALU meets its functional specification -- \sig{ADD} and \sig{SUB} both
+verified against dedicated testbenches, with the full datapath additionally
+exercised end-to-end including its signed-overflow boundaries -- and its
+physical implementation is signoff-clean (DRC and LVS both pass with zero
+violations). The Sklansky adder's parallel-prefix structure delivers a
+measured $f_{max}$ of \textbf{4.33\,GHz at 1.2\,V}, degrading to a
+corrected \textbf{2.05\,GHz at 0.9\,V} as reduced drive current lengthens
+every stage's propagation delay -- the same physical mechanism explored
+independently in the Part 2 ring-oscillator study, where inverter sizing
+and output loading traded off against $f_{osc}$ in exactly the same
+direction. Together, the two parts demonstrate the same design
+principle from opposite ends: drive strength buys speed, and every
+picosecond of that budget has to be accounted for, from a single inverter
+stage up to a full datapath's critical path.
+
+\end{document}
