@@ -53,11 +53,18 @@ schematic → layout → DRC/LVS → post-layout timing, at two voltage corners.
 ## The Sklansky Adder
 
 <p align="center">
-  <img src="assets/diagram_sklansky_tree.png" alt="4-bit Sklansky parallel-prefix tree: leaf PG cells generate per-bit P and G signals; two levels of Gray and Black cells combine them into the group carries C1 through C3" width="620">
+  <img src="assets/diagram_sklansky_tree.png" alt="4-bit Sklansky parallel-prefix tree with the exact carry each stage produces: C1 comes directly from PG0 with no combining cell, C2 from a single Gray cell, and C3/C4 (carry-out) each from a second-stage Gray cell fed by the first stage's fan-out" width="640">
 </p>
 
 A **parallel prefix tree** computes every carry $C_i$ in $O(\log n)$ time
-instead of rippling bit-by-bit through the word:
+instead of rippling bit-by-bit through the word. The diagram above is
+traced against the group's own gate-level netlist (`out_gray_1`,
+`out_gray_2`, `out_gray_3` in [`assets/adder_schematic.png`](assets/adder_schematic.png)),
+and it's worth noticing that $C_1$ needs **no cell at all** — bit 0's
+generate signal *is* the carry into bit 1 — so the tree's worst-case depth
+for a 4-bit word is really 2 stages (for $C_3$ and $C_4$), not a uniform 2
+stages for every carry. The fan-out from the level-1 Gray cell into *both*
+level-2 cells is what keeps that depth logarithmic instead of linear.
 
 - **PG cell** — generates $P_i = A_i \oplus B_i$ and $G_i = A_i \cdot B_i$ per bit.
 - **Black cell** — combines two adjacent group signals: $G_{group} = G_{left} + (P_{left} \cdot G_{right})$, $P_{group} = P_{left} \cdot P_{right}$.
@@ -123,8 +130,14 @@ partial sum latched into `X`; **3rd** — the final result, after subtracting
 ## Timing: Critical Path & Voltage Impact
 
 <p align="center">
-  <img src="assets/chart_fmax_vs_vdd.png" alt="Bar chart of maximum ALU clock frequency at 1.2V (4.33 GHz) versus 0.9V (2.05 GHz)" width="480">
+  <img src="assets/chart_fmax_vs_vdd.png" alt="Stacked bar chart showing the cycle-time budget at each voltage corner: setup time plus combined logic delay and clock-to-Q, stacked to total 231ps at 1.2V (4.33 GHz) and 488ps at 0.9V (2.05 GHz)" width="520">
 </p>
+
+Rather than just showing the fmax outcome, each bar above is literally
+$T_{cyc} = T_{setup} + (t_{cq} + t_{sub,max})$, stacked to show *where the
+time actually goes*: both components grow at the lower supply, not just
+the logic delay — reduced drive current slows the flip-flops themselves
+too — and that combined growth is what nearly doubles the cycle time.
 
 Setup time and the subtractor's carry-out settling delay were measured
 directly in Spectre by sweeping a programmable delay and locating the

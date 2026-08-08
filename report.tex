@@ -335,8 +335,10 @@ three logic cells:
 \end{itemize}
 
 \noindent\textbf{Carry recurrence:} \(\displaystyle C_{i+1} = G_i + P_i \cdot C_i\)
+\quad ($C_i$ is the carry \emph{into} bit $i$; $C_0$ is the adder's carry-in, tied to 0 here.)
 
-\noindent\textbf{Final sum:} \(\displaystyle S_i = P_i \oplus C_{i-1}\)
+\noindent\textbf{Final sum:} \(\displaystyle S_i = P_i \oplus C_i\)
+\quad (using the same index $i$ as the recurrence above -- e.g.\ $S_1 = P_1 \oplus C_1 = P_1 \oplus G_0$, matching $G_0$ wiring directly into the $S_1$ XOR with no combining cell in Figure~\ref{fig:adder-schematic}, and $S_2 = P_2 \oplus C_2 = P_2 \oplus \text{\sig{out\_gray\_1}}$ one stage later.)\footnote{The original report stated this as $S_i = P_i \oplus C_{i-1}$, which is off by one against its own carry recurrence above; corrected here to match both the recurrence and the actual netlist.}
 
 \subsection{Why Sklansky}
 \begin{itemize}
@@ -358,28 +360,41 @@ three logic cells:
   \node[pg] (pg\i) at (\x, 0) {PG\i};
   \node[font=\scriptsize\color{inksecondary}] at (\x, 0.62) {$A_\i,B_\i$};
 }
-\node[gr] (l1a) at (2, -1.4) {Gray};
-\node[bk] (l1b) at (6, -1.4) {Black};
+
+% C1 = G0 directly -- no combining cell needed, it's a leaf output
+\draw[dashed, inkmuted] (pg0.south) -- ++(0,-0.65);
+\node[font=\scriptsize\color{inksecondary}] at (0, -1.4) {$C_1{=}G_0$};
+
+\node[gr] (l1a) at (2, -1.4) {Gray}; % G[0:1]
+\node[bk] (l1b) at (6, -1.4) {Black}; % (P,G)[2:3]
 \draw (pg0) -- (l1a); \draw (pg1) -- (l1a);
 \draw (pg2) -- (l1b); \draw (pg3) -- (l1b);
 
-\node[gr] (l2a) at (4, -2.8) {Gray};
-\node[gr] (l2b) at (6, -2.8) {Gray};
+% C2 = G[0:1] -- direct tap off the level-1 Gray cell, one stage deep
+\draw[dashed, inkmuted] (l1a.south) -- ++(0,-0.65);
+\node[font=\scriptsize\color{inksecondary}] at (2, -2.8) {$C_2{=}G_{0:1}$};
+
+\node[gr] (l2a) at (4, -2.8) {Gray}; % G[0:2] -- combines G[0:1] with PG2
+\node[gr] (l2b) at (6, -2.8) {Gray}; % G[0:3] -- combines G[0:1] with (P,G)[2:3]
 \draw (l1a) -- (l2a); \draw (pg2) to[out=200,in=90] (l2a);
 \draw (l1a) to[out=-20,in=140] (l2b); \draw (l1b) -- (l2b);
 
-\node[font=\scriptsize\color{inksecondary}] at (0,-2.8) {$C_0$};
-\node[font=\scriptsize\color{inksecondary}] at (2,-2.8) {$C_1$};
-\node[font=\scriptsize\color{inksecondary}] at (4,-3.4) {$C_2$};
-\node[font=\scriptsize\color{inksecondary}] at (6,-3.4) {$C_3$};
-\draw[-, dashed, inkmuted] (0,-2.55) -- (0,-2.2);
-\draw[-, dashed, inkmuted] (2,-2.05) -- (2,-1.75);
+\node[font=\scriptsize\color{inksecondary}] at (4,-3.55) {$C_3{=}G_{0:2}$};
+\node[font=\scriptsize\color{inksecondary}] at (6,-3.55) {$C_4{=}C_{OUT}$};
+\draw[-, dashed, inkmuted] (l2a.south) -- ++(0,-0.35);
+\draw[-, dashed, inkmuted] (l2b.south) -- ++(0,-0.35);
 \end{tikzpicture}
-\caption{Simplified 4-bit Sklansky prefix tree: leaf PG cells generate
-per-bit $(P,G)$; two levels of Gray/Black cells combine them into the
-group carries $C_1$--$C_3$ in $\log_2(4)=2$ stages. (Conceptual redraw;
-the group's actual gate-level netlist is in \S\ref{sec:impl-adder-sub}
-and Figure~\ref{fig:floorplan-gatelevel}.)}
+\caption{4-bit Sklansky prefix tree, with the exact carry each stage
+produces (verified against the group's own gate-level netlist,
+Figure~\ref{fig:adder-schematic}): $C_1{=}G_0$ needs no combining cell at
+all (bit 0's generate signal \emph{is} the carry into bit 1); $C_2{=}G_{0:1}$
+comes from a single Gray cell; $C_3$ and $C_4$ (the final carry-out) each
+need a second stage, so the tree's worst-case depth is 2 -- consistent with
+$\lceil\log_2(4)\rceil=2$. Note the fan-out: the level-1 Gray cell's output
+feeds \emph{both} level-2 cells, which is what keeps this tree
+logarithmic-depth rather than linear. (Conceptual redraw; the group's
+actual gate-level netlist is in \S\ref{sec:impl-adder-sub} and
+Figure~\ref{fig:floorplan-gatelevel}.)}
 \label{fig:sklansky-tree}
 \end{figure}
 
@@ -741,25 +756,41 @@ T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 44\,\mathrm{ps} + 0.444\,\mathrm{
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-  width=0.72\linewidth, height=5.2cm,
-  ybar, bar width=28pt,
-  ymin=0, ymax=5,
-  ylabel={$f_{max}$ (GHz)},
+  width=0.8\linewidth, height=6.6cm,
+  ybar stacked, bar width=36pt,
+  ymin=0, ymax=570,
+  ylabel={Cycle-time budget, $T_{cyc}$ (ps)},
   symbolic x coords={1.2 V, 0.9 V},
   xtick=data,
+  enlarge x limits=0.32,
   axis lines*=left,
   ymajorgrids, grid style={gridline, line width=0.4pt},
-  nodes near coords, nodes near coords align={vertical},
   every axis plot/.append style={draw=none},
+  legend style={at={(0.5,1.14)}, anchor=north, legend columns=-1, draw=none,
+                font=\small, /tikz/column 2/.style={column sep=14pt}},
 ]
-\addplot[fill=accentblueLight] coordinates {(1.2 V, 4.33)};
-\addplot[fill=accentorange] coordinates {(0.9 V, 2.05)};
+\addplot+[fill=accentblueLight] coordinates {(1.2 V,20) (0.9 V,44)};
+\addplot+[fill=accentblue,
+  nodes near coords, point meta=explicit symbolic,
+  every node near coord/.style={font=\scriptsize\bfseries, text=white}]
+  coordinates {(1.2 V,211) [211 ps] (0.9 V,444) [444 ps]};
+\legend{Setup time, Logic delay $+\,t_{CQ}$}
+\node[font=\scriptsize\bfseries, color=accentblue, anchor=west] at (axis cs:1.2 V,20) [xshift=22pt] {20\,ps};
+\node[font=\scriptsize\bfseries, color=accentblue, anchor=west] at (axis cs:0.9 V,44) [xshift=22pt] {44\,ps};
+\node[font=\bfseries\large, color=accentorange] at (axis cs:1.2 V,340) {4.33 GHz};
+\node[font=\scriptsize, color=inksecondary] at (axis cs:1.2 V,295) {$T_{cyc}=231$\,ps};
+\node[font=\bfseries\large, color=accentorange] at (axis cs:0.9 V,540) {2.05 GHz};
+\node[font=\scriptsize, color=inksecondary] at (axis cs:0.9 V,495) {$T_{cyc}=488$\,ps};
 \end{axis}
 \end{tikzpicture}
-\caption{Corrected maximum ALU clock frequency vs.\ supply voltage. Lower
-$V_{DD}$ roughly halves $f_{max}$, driven by reduced transistor drive
-current (see \S\ref{sec:part2-q45} and the $t = C\Delta V / I_{AVG}$
-relation below).}
+\caption{Cycle-time budget at each corner: each bar is literally
+$T_{cyc} = T_{setup} + (t_{cq}+t_{sub,max})$, stacked to show where the
+time actually goes, with the resulting $f_{max} = 1/T_{cyc}$ called out
+above. Both components grow at the lower supply -- not just the logic
+delay -- because reduced drive current slows the flip-flops themselves too
+(see \S\ref{sec:part2-q45} and the $t = C\Delta V / I_{AVG}$ relation
+below); that combined growth is what nearly doubles the cycle time and
+roughly halves $f_{max}$ at 0.9\,V.}
 \label{fig:fmax-vdd}
 \end{figure}
 
