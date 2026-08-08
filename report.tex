@@ -351,7 +351,7 @@ three logic cells:
 % ---- row labels ----
 \node[stagelabel] at (-1.1, 0)    {Bit level};
 \node[stagelabel] at (-1.1, -2.2) {Stage 1};
-\node[stagelabel] at (-1.1, -4.4) {Stage 2};
+\node[stagelabel] at (-1.1, -6.6) {Stage 2};
 
 % ---- leaves ----
 \foreach \i/\x in {0/0, 1/3, 2/6, 3/9} {
@@ -377,30 +377,32 @@ three logic cells:
 \draw[wire, dashed] (l1a.south west) -- ++(-0.55,-0.5);
 \node[font=\scriptsize\bfseries\color{accentblue}, anchor=north east] at ($(l1a.south west)+(-0.6,-0.55)$) {$C_2=G_{0:1}$};
 
-% ---- Stage 2 ----
-\node[gr] (l2a) at (4.5, -4.4) {Gray}; % G[0:2]: combines G[0:1] with PG2
-\node[gr] (l2b) at (7.5, -4.4) {Gray}; % G[0:3]=Cout: combines G[0:1] with (P,G)[2:3]
+% ---- Stage 2 (pushed well below the bus row so every turn has clear room) ----
+\node[gr] (l2a) at (4.5, -6.6) {Gray}; % G[0:2]: combines G[0:1] with PG2
+\node[gr] (l2b) at (7.5, -6.6) {Gray}; % G[0:3]=Cout: combines G[0:1] with (P,G)[2:3]
 
-% Fan-out bus: G[0:1] leaves Stage 1 and feeds BOTH Stage-2 cells (orthogonal
-% routing with a junction dot at the branch, and a small hop where it
-% crosses PG2's own wire below -- the hop marks "crosses, does not connect").
-\coordinate (busJ) at (1.5, -3.6);
+% Fan-out bus: G[0:1] leaves Stage 1 and feeds BOTH Stage-2 cells -- strictly
+% orthogonal (horizontal bus, then a plain vertical drop into each cell), with
+% a junction dot at the branch and a small hop where it crosses PG2's own
+% wire below (the hop marks "crosses, does not connect").
+\coordinate (busJ) at (1.5, -4.2);
 \draw[wire] (l1a.south) -- (busJ);
 \fill[accentblue] (busJ) circle (1.3pt);
-\draw[wire] (busJ) -- (4.5,-3.6) -- (l2a.north west);
-\draw[wire] (busJ) -- (4.5,-3.6) -- (5.7,-3.6) arc (180:0:0.18) -- (7.5,-3.6) -- (l2b.north west);
-\node[siglabel] at (3, -3.6) {$G_{0:1}$};
-\node[siglabel] at (6.9, -3.85) {$G_{0:1}$};
+\draw[wire] (busJ) -- (4.5,-4.2) -- (l2a.north);
+\draw[wire] (busJ) -- (4.5,-4.2) -- (5.7,-4.2) arc (180:0:0.18) -- (7.5,-4.2) -- (l2b.north west);
+\node[siglabel] at (3, -4.2) {$G_{0:1}$};
+\node[siglabel] at (6.9, -4.45) {$G_{0:1}$};
 
 % PG2's second tap (its first tap already went to the Black cell above) --
-% routed on its own lower bus so it only crosses the G[0:1] bus at the hop.
-\draw[wire] (pg2.south) -- (6,-3.9) -- (4.5,-3.9) -- (l2a.north east);
-\node[siglabel] at (6.4,-2.85) {$P_2,G_2$};
+% enters l2a from the side (east), so it never approaches from above and
+% cannot cross paths with the G[0:1] bus dropping into l2a's top.
+\draw[wire] (pg2.south) -- (6,-6.6) -- (l2a.east);
+\node[siglabel] at (6.4,-3.4) {$P_2,G_2$};
 
 \draw[wire] (l1b) -- (l2b.north east) node[siglabel, pos=0.5, right] {$P_{2:3},G_{2:3}$};
 
-\node[font=\scriptsize\bfseries\color{accentblue}] at (4.5,-5.35) {$C_3=G_{0:2}$};
-\node[font=\scriptsize\bfseries\color{accentblue}] at (7.5,-5.35) {$C_4=C_{OUT}$};
+\node[font=\scriptsize\bfseries\color{accentblue}] at (4.5,-7.55) {$C_3=G_{0:2}$};
+\node[font=\scriptsize\bfseries\color{accentblue}] at (7.5,-7.55) {$C_4=C_{OUT}$};
 \draw[wire, dashed] (l2a.south) -- ++(0,-0.55);
 \draw[wire, dashed] (l2b.south) -- ++(0,-0.55);
 \end{tikzpicture}
