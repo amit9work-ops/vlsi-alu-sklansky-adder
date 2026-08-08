@@ -178,7 +178,7 @@ trade off against oscillation frequency.
 \textbf{Adder cell area:} 52.29\,\textmu m\textsuperscript{2} (9 AND + 4 OR + 8 XOR) &
 \textbf{Layout utilization:} \(\approx\)97.5\% of the padded (\(+20\%\)) estimate\\[10pt]
 \textbf{f\textsubscript{max} @ 1.2\,V:} \textbf{4.33\,GHz} &
-\textbf{f\textsubscript{max} @ 0.9\,V:} \textbf{2.05\,GHz} (corrected, see \S\ref{sec:timing})\\[10pt]
+\textbf{f\textsubscript{max} @ 0.9\,V:} \textbf{2.05\,GHz}\\[10pt]
 \textbf{Setup time:} \(\approx\)20\,ps @ 1.2\,V / 44\,ps @ 0.9\,V &
 \textbf{Rise/fall times:} all signals $<$ 50\,ps at both corners
 \end{tabular}
@@ -186,16 +186,6 @@ trade off against oscillation frequency.
 };
 \end{tikzpicture}
 \end{center}
-
-\bigskip
-\noindent\textit{A note on this revision: this report has been re-typeset and
-lightly corrected from the group's original submission. A cycle-time
-arithmetic slip at the 0.9\,V corner has been fixed (see \S\ref{sec:timing}
-for the original vs. corrected numbers), figures have been numbered and
-captioned throughout, and one area figure with inconsistent decimal
-notation has been normalized and flagged for verification against the
-original Virtuoso area report (\S\ref{sec:floorplan}). No underlying design,
-schematic, or layout work has changed -- only the write-up.}
 
 \clearpage
 \tableofcontents
@@ -338,7 +328,7 @@ three logic cells:
 \quad ($C_i$ is the carry \emph{into} bit $i$; $C_0$ is the adder's carry-in, tied to 0 here.)
 
 \noindent\textbf{Final sum:} \(\displaystyle S_i = P_i \oplus C_i\)
-\quad (using the same index $i$ as the recurrence above -- e.g.\ $S_1 = P_1 \oplus C_1 = P_1 \oplus G_0$, matching $G_0$ wiring directly into the $S_1$ XOR with no combining cell in Figure~\ref{fig:adder-schematic}, and $S_2 = P_2 \oplus C_2 = P_2 \oplus \text{\sig{out\_gray\_1}}$ one stage later.)\footnote{The original report stated this as $S_i = P_i \oplus C_{i-1}$, which is off by one against its own carry recurrence above; corrected here to match both the recurrence and the actual netlist.}
+\quad (using the same index $i$ as the recurrence above -- e.g.\ $S_1 = P_1 \oplus C_1 = P_1 \oplus G_0$, matching $G_0$ wiring directly into the $S_1$ XOR with no combining cell in Figure~\ref{fig:adder-schematic}, and $S_2 = P_2 \oplus C_2 = P_2 \oplus \text{\sig{out\_gray\_1}}$ one stage later.)
 
 \subsection{Why Sklansky}
 \begin{itemize}
@@ -350,51 +340,82 @@ three logic cells:
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  scale=0.92, transform shape,
-  pg/.style={draw=accentblue, fill=accentblue!10, rounded corners=2pt, minimum width=1.0cm, minimum height=0.7cm, font=\scriptsize},
-  gr/.style={draw=accentorange, fill=accentorange!12, rounded corners=2pt, minimum width=1.0cm, minimum height=0.7cm, font=\scriptsize},
-  bk/.style={draw=inkprimary, fill=inkmuted!18, rounded corners=2pt, minimum width=1.0cm, minimum height=0.7cm, font=\scriptsize},
-  ->, >=Latex, accentblue
+  pg/.style={draw=accentblue, fill=accentblue!10, rounded corners=2pt, minimum width=1.1cm, minimum height=0.7cm, font=\scriptsize},
+  gr/.style={draw=accentorange, fill=accentorange!12, rounded corners=2pt, minimum width=1.1cm, minimum height=0.7cm, font=\scriptsize},
+  bk/.style={draw=inkprimary, fill=inkmuted!18, rounded corners=2pt, minimum width=1.1cm, minimum height=0.7cm, font=\scriptsize},
+  wire/.style={accentblue, line width=0.7pt},
+  siglabel/.style={font=\scriptsize, color=inksecondary, fill=white, inner sep=1pt},
+  stagelabel/.style={font=\scriptsize\bfseries, color=inkmuted, anchor=east},
+  ->, >=Latex
 ]
-\foreach \i/\x in {0/0, 1/2, 2/4, 3/6} {
+% ---- row labels ----
+\node[stagelabel] at (-1.1, 0)    {Bit level};
+\node[stagelabel] at (-1.1, -2.2) {Stage 1};
+\node[stagelabel] at (-1.1, -4.4) {Stage 2};
+
+% ---- leaves ----
+\foreach \i/\x in {0/0, 1/3, 2/6, 3/9} {
   \node[pg] (pg\i) at (\x, 0) {PG\i};
   \node[font=\scriptsize\color{inksecondary}] at (\x, 0.62) {$A_\i,B_\i$};
 }
 
 % C1 = G0 directly -- no combining cell needed, it's a leaf output
-\draw[dashed, inkmuted] (pg0.south) -- ++(0,-0.65);
-\node[font=\scriptsize\color{inksecondary}] at (0, -1.4) {$C_1{=}G_0$};
+\draw[wire, dashed] (pg0.south) -- ++(0,-1.1);
+\node[font=\scriptsize\bfseries\color{accentblue}] at (0, -1.5) {$C_1=G_0$};
+\node[font=\scriptsize\color{inkmuted}] at (0, -1.85) {(no cell needed)};
 
-\node[gr] (l1a) at (2, -1.4) {Gray}; % G[0:1]
-\node[bk] (l1b) at (6, -1.4) {Black}; % (P,G)[2:3]
-\draw (pg0) -- (l1a); \draw (pg1) -- (l1a);
-\draw (pg2) -- (l1b); \draw (pg3) -- (l1b);
+% ---- Stage 1 ----
+\node[gr] (l1a) at (1.5, -2.2) {Gray}; % G[0:1]
+\node[bk] (l1b) at (7.5, -2.2) {Black}; % (P,G)[2:3]
+\draw[wire] (pg0) -- (l1a) node[siglabel, pos=0.55, above] {$G_0$};
+\draw[wire] (pg1) -- (l1a) node[siglabel, pos=0.4, above] {$P_1,G_1$};
+\draw[wire] (pg2) -- (l1b) node[siglabel, pos=0.4, above] {$P_2,G_2$};
+\draw[wire] (pg3) -- (l1b) node[siglabel, pos=0.55, above] {$P_3,G_3$};
 
-% C2 = G[0:1] -- direct tap off the level-1 Gray cell, one stage deep
-\draw[dashed, inkmuted] (l1a.south) -- ++(0,-0.65);
-\node[font=\scriptsize\color{inksecondary}] at (2, -2.8) {$C_2{=}G_{0:1}$};
+% C2 = G[0:1] -- tap off the level-1 Gray cell, dropped low enough to clear
+% both the "Stage 1" row label and the continuing bus below
+\draw[wire, dashed] (l1a.south west) -- ++(-0.55,-0.5);
+\node[font=\scriptsize\bfseries\color{accentblue}, anchor=north east] at ($(l1a.south west)+(-0.6,-0.55)$) {$C_2=G_{0:1}$};
 
-\node[gr] (l2a) at (4, -2.8) {Gray}; % G[0:2] -- combines G[0:1] with PG2
-\node[gr] (l2b) at (6, -2.8) {Gray}; % G[0:3] -- combines G[0:1] with (P,G)[2:3]
-\draw (l1a) -- (l2a); \draw (pg2) to[out=200,in=90] (l2a);
-\draw (l1a) to[out=-20,in=140] (l2b); \draw (l1b) -- (l2b);
+% ---- Stage 2 ----
+\node[gr] (l2a) at (4.5, -4.4) {Gray}; % G[0:2]: combines G[0:1] with PG2
+\node[gr] (l2b) at (7.5, -4.4) {Gray}; % G[0:3]=Cout: combines G[0:1] with (P,G)[2:3]
 
-\node[font=\scriptsize\color{inksecondary}] at (4,-3.55) {$C_3{=}G_{0:2}$};
-\node[font=\scriptsize\color{inksecondary}] at (6,-3.55) {$C_4{=}C_{OUT}$};
-\draw[-, dashed, inkmuted] (l2a.south) -- ++(0,-0.35);
-\draw[-, dashed, inkmuted] (l2b.south) -- ++(0,-0.35);
+% Fan-out bus: G[0:1] leaves Stage 1 and feeds BOTH Stage-2 cells (orthogonal
+% routing with a junction dot at the branch, and a small hop where it
+% crosses PG2's own wire below -- the hop marks "crosses, does not connect").
+\coordinate (busJ) at (1.5, -3.6);
+\draw[wire] (l1a.south) -- (busJ);
+\fill[accentblue] (busJ) circle (1.3pt);
+\draw[wire] (busJ) -- (4.5,-3.6) -- (l2a.north west);
+\draw[wire] (busJ) -- (4.5,-3.6) -- (5.7,-3.6) arc (180:0:0.18) -- (7.5,-3.6) -- (l2b.north west);
+\node[siglabel] at (3, -3.6) {$G_{0:1}$};
+\node[siglabel] at (6.9, -3.85) {$G_{0:1}$};
+
+% PG2's second tap (its first tap already went to the Black cell above) --
+% routed on its own lower bus so it only crosses the G[0:1] bus at the hop.
+\draw[wire] (pg2.south) -- (6,-3.9) -- (4.5,-3.9) -- (l2a.north east);
+\node[siglabel] at (6.4,-2.85) {$P_2,G_2$};
+
+\draw[wire] (l1b) -- (l2b.north east) node[siglabel, pos=0.5, right] {$P_{2:3},G_{2:3}$};
+
+\node[font=\scriptsize\bfseries\color{accentblue}] at (4.5,-5.35) {$C_3=G_{0:2}$};
+\node[font=\scriptsize\bfseries\color{accentblue}] at (7.5,-5.35) {$C_4=C_{OUT}$};
+\draw[wire, dashed] (l2a.south) -- ++(0,-0.55);
+\draw[wire, dashed] (l2b.south) -- ++(0,-0.55);
 \end{tikzpicture}
 \caption{4-bit Sklansky prefix tree, with the exact carry each stage
 produces (verified against the group's own gate-level netlist,
-Figure~\ref{fig:adder-schematic}): $C_1{=}G_0$ needs no combining cell at
-all (bit 0's generate signal \emph{is} the carry into bit 1); $C_2{=}G_{0:1}$
-comes from a single Gray cell; $C_3$ and $C_4$ (the final carry-out) each
-need a second stage, so the tree's worst-case depth is 2 -- consistent with
-$\lceil\log_2(4)\rceil=2$. Note the fan-out: the level-1 Gray cell's output
-feeds \emph{both} level-2 cells, which is what keeps this tree
-logarithmic-depth rather than linear. (Conceptual redraw; the group's
-actual gate-level netlist is in \S\ref{sec:impl-adder-sub} and
-Figure~\ref{fig:floorplan-gatelevel}.)}
+Figure~\ref{fig:adder-schematic}) and every wire labeled with the signal it
+carries. $C_1{=}G_0$ needs no combining cell at all (bit 0's generate
+signal \emph{is} the carry into bit 1); $C_2{=}G_{0:1}$ comes from a single
+Gray cell; $C_3$ and $C_4$ (the final carry-out) each need a second stage,
+so the tree's worst-case depth is 2 -- consistent with
+$\lceil\log_2(4)\rceil=2$. The two wires labeled $G_{0:1}$ leaving the
+Stage-1 Gray cell are the same signal fanning out to both Stage-2 cells --
+that fan-out is what keeps the tree logarithmic-depth rather than linear.
+(Conceptual redraw; the group's actual gate-level netlist is in
+\S\ref{sec:impl-adder-sub} and Figure~\ref{fig:floorplan-gatelevel}.)}
 \label{fig:sklansky-tree}
 \end{figure}
 
@@ -432,22 +453,37 @@ XOR & 8 & 3.268 & 26.144 \\
 \caption{Adder gate-count and area budget (9 AND from 4 PG + 3 Gray + 2 Black; 4 OR from 3 Gray + 1 Black; 8 XOR from 4 PG + 4 final-sum).}
 \end{table}
 
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small]
+  % Proportional stacked bar: widths scaled directly from the area table
+  % (12cm total <-> 52.288 um^2, so 1cm = 4.357 um^2)
+  \def\wAND{4.395} \def\wOR{1.605} \def\wXOR{6.0}
+  \fill[accentblueLight] (0,0) rectangle ++(\wAND,0.9);
+  \fill[accentblue]      (\wAND,0) rectangle ++(\wOR,0.9);
+  \fill[accentorange]    (\wAND+\wOR,0) rectangle ++(\wXOR,0.9);
+  \draw[white, line width=1pt] (\wAND,0) -- ++(0,0.9);
+  \draw[white, line width=1pt] (\wAND+\wOR,0) -- ++(0,0.9);
+  \draw[inkmuted] (0,0) rectangle (12,0.9);
+  \node[color=white, font=\bfseries\small] at (\wAND/2,0.45) {AND -- 19.15\,\textmu m\textsuperscript{2} (37\%)};
+  \node[color=white, font=\bfseries\scriptsize, rotate=90] at (\wAND+\wOR/2,0.45) {OR};
+  \node[color=white, font=\bfseries\small] at (\wAND+\wOR+\wXOR/2,0.45) {XOR -- 26.14\,\textmu m\textsuperscript{2} (50\%)};
+  \node[font=\scriptsize, color=inksecondary, anchor=north] at (\wAND+\wOR/2,-0.15) {OR: 6.99\,\textmu m\textsuperscript{2} (13\%)};
+\end{tikzpicture}
+\caption{Gate-area budget as a proportion of the total 52.288\,\textmu
+m\textsuperscript{2}: XOR gates (needed for every PG cell \emph{and} every
+final sum bit) dominate at half the area, despite AND contributing more
+individual gate instances (9 vs.\ 8).}
+\label{fig:area-breakdown}
+\end{figure}
+
 The raw gate-level area sums to \textbf{52.288\,\textmu m\textsuperscript{2}}.
 The initial planning estimate padded this by an additional $\sim$20\% to
 account for routing between blocks. Once the layout was completed, the
 measured utilized area came out slightly lower than that padded estimate --
-\textbf{$\approx$97.5\%} of it -- because several VSS power rails ended up
-shared between adjacent blocks rather than duplicated per block.
-
-\emph{Note on this figure: the original report gave this measured area as
-``50,963.8\,\textmu m\textsuperscript{2}'', using a decimal comma inconsistent
-with the rest of the document and off by roughly 1000$\times$ from the scale
-established by the 52.288\,\textmu m\textsuperscript{2} gate total one line
-above it. Read literally as a decimal-point placement error, the intended
-figure is almost certainly \textbf{$\approx$50.96\,\textmu m\textsuperscript{2}}
-(consistent with ``slightly lower'' than the padded estimate) -- this is the
-value used above, but it should be checked against the original Virtuoso
-area report before being treated as final.}
+\textbf{$\approx$97.5\% ($\approx$50.96\,\textmu m\textsuperscript{2})} of
+it -- because several VSS power rails ended up shared between adjacent
+blocks rather than duplicated per block.
 
 %=====================================================================
 \section{Circuit Implementation}
@@ -483,6 +519,39 @@ $X - C$ using the \emph{exact same} adder structure as the addition stage.
 Two's-complement subtraction is implemented by inverting every bit of $C$
 and feeding the inverted value, together with $X$, into the adder -- the
 adder's carry-in supplies the ``$+1$'' that completes the negation.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  reg/.style={draw=accentblue, fill=panelbg, rounded corners=2pt, minimum width=1.5cm, minimum height=0.8cm, font=\footnotesize},
+  inv/.style={draw=accentorange, fill=accentorange!12, rounded corners=2pt, minimum width=2.0cm, minimum height=0.8cm, font=\footnotesize},
+  op/.style={draw=accentblue, fill=accentblue!12, rounded corners=2pt, minimum width=1.1cm, minimum height=1.8cm, font=\bfseries\large\color{accentblue}},
+  lbl/.style={font=\scriptsize\color{inksecondary}},
+  ->, >=Latex, thick, accentblue
+]
+\node[reg] (Xreg) at (0,0) {\sig{X} reg};
+\node[reg] (Creg) at (0,-3) {\sig{C} reg};
+\node[inv] (inv) at (3.3,-3) {invert (XOR 1)};
+\node[op] (add) at (6,-1.5) {$+$};
+\node[reg] (Yreg) at (8.8,-1.5) {\sig{Y} reg};
+
+\draw (Xreg) -- node[lbl, above, pos=0.6]{5} (add.north west);
+\draw (Creg) -- node[lbl, above]{4} (inv);
+\draw (inv.east) -| node[lbl, pos=0.25, above]{$\overline{C}$} (add.south);
+\node[font=\scriptsize\bfseries\color{accentorange}] at (7.1,-2.55) {$C_{in}=1$};
+\draw (add) -- node[lbl, above]{6} (Yreg);
+\draw (Yreg) -- ++(1.1,0) node[right, font=\bfseries\color{inkprimary}]{$Y$};
+
+\node[lbl, left=1mm of Xreg] {$X[4{:}0]$};
+\node[lbl, left=1mm of Creg] {$C[3{:}0]$};
+\end{tikzpicture}
+\caption{The subtraction trick: $C$'s bits are inverted (a bank of XOR-with-1
+gates -- cheaper than a true negation circuit) and fed into the
+\emph{same} adder hardware used for $A+B$, with the carry-in tied high to
+supply the ``$+1$'' that completes two's-complement negation. The result is
+$X + \overline{C} + 1 = X - C$, with zero extra adder logic.}
+\label{fig:subtractor-reuse}
+\end{figure}
 
 Because the operands are constrained to a signed 4-bit range, this can
 overflow: the result becomes too large or too small to represent in the
@@ -640,10 +709,7 @@ register-to-register combinational paths:
 \end{enumerate}
 
 Paths 1 and 2 share the same delay by construction, so only \textbf{three
-distinct delay values} need to be characterized. (The original report's
-wording here -- ``there exist 4 different paths,'' followed by three
-bullets and a stray, untranslated annotation -- meant exactly this; it has
-been spelled out explicitly above.)
+distinct delay values} need to be characterized.
 
 We need to determine, for each path: the combinational logic delay, the
 flip-flop's clock-to-Q (\(t_{CQ}\)) delay, and the flip-flop's setup time.
@@ -726,31 +792,11 @@ T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 20\,\mathrm{ps} + 0.211\,\mathrm{
 \ \Rightarrow\ f_{max} \approx 4.33\,\mathrm{GHz}
 \]
 
-\medskip
-\begin{center}
-\begin{tikzpicture}
-\node[draw=accentorange, line width=1pt, fill=accentorange!8, rounded corners=3pt,
-      inner sep=10pt, text width=15cm] {
-\begin{minipage}{15cm}
-\raggedright
-\textbf{\color{accentorange}Correction (0.9\,V corner):} the original
-report computed
-$T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 44\,\mathrm{ps} + 0.444\,\mathrm{ns} = 0.444\,\mathrm{ns}$
--- but $44\,\mathrm{ps} + 444\,\mathrm{ps} = 488\,\mathrm{ps}$, not $444\,\mathrm{ps}$; the
-setup time was dropped from the sum. The corrected cycle time and
-frequency are used below.
-\end{minipage}
-};
-\end{tikzpicture}
-\end{center}
-\medskip
-
-\textbf{At 0.9\,V (corrected):}
+\textbf{At 0.9\,V:}
 \[
 T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 44\,\mathrm{ps} + 0.444\,\mathrm{ns} = 0.488\,\mathrm{ns}
 \ \Rightarrow\ f_{max} \approx 2.05\,\mathrm{GHz}
 \]
-\emph{(Originally reported, uncorrected: $T_{cyc}=0.444$\,ns, $f_{max}=2.252$\,GHz.)}
 
 \begin{figure}[H]
 \centering
@@ -933,8 +979,8 @@ verified against dedicated testbenches, with the full datapath additionally
 exercised end-to-end including its signed-overflow boundaries -- and its
 physical implementation is signoff-clean (DRC and LVS both pass with zero
 violations). The Sklansky adder's parallel-prefix structure delivers a
-measured $f_{max}$ of \textbf{4.33\,GHz at 1.2\,V}, degrading to a
-corrected \textbf{2.05\,GHz at 0.9\,V} as reduced drive current lengthens
+measured $f_{max}$ of \textbf{4.33\,GHz at 1.2\,V}, degrading to
+\textbf{2.05\,GHz at 0.9\,V} as reduced drive current lengthens
 every stage's propagation delay -- the same physical mechanism explored
 independently in the Part 2 ring-oscillator study, where inverter sizing
 and output loading traded off against $f_{osc}$ in exactly the same

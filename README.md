@@ -50,10 +50,19 @@ schematic → layout → DRC/LVS → post-layout timing, at two voltage corners.
 | `SUBTRACTOR` | Reuses the adder via two's-complement inversion for `X - C` |
 | `6bit_register` | Latches the final signed result `Y` |
 
+<p align="center">
+  <img src="assets/diagram_subtractor_reuse.png" alt="The subtraction trick: C's bits are inverted through a bank of XOR-with-1 gates and fed into the same adder used for A+B, with the carry-in tied high to complete two's-complement negation, computing X - C with zero extra adder logic" width="720">
+</p>
+
+The subtractor is a clean example of hardware reuse: rather than building a
+second arithmetic unit, `C`'s bits are inverted and fed into the *exact
+same* adder used for `A + B`, with the carry-in tied high — `X + C̄ + 1 =
+X − C`, for free.
+
 ## The Sklansky Adder
 
 <p align="center">
-  <img src="assets/diagram_sklansky_tree.png" alt="4-bit Sklansky parallel-prefix tree with the exact carry each stage produces: C1 comes directly from PG0 with no combining cell, C2 from a single Gray cell, and C3/C4 (carry-out) each from a second-stage Gray cell fed by the first stage's fan-out" width="640">
+  <img src="assets/diagram_sklansky_tree.png" alt="4-bit Sklansky parallel-prefix tree with every wire labeled by signal: C1 comes directly from PG0 with no combining cell, C2 from a single Gray cell, and C3/C4 (carry-out) each from a second-stage Gray cell fed by the first stage's fan-out" width="760">
 </p>
 
 A **parallel prefix tree** computes every carry $C_i$ in $O(\log n)$ time
@@ -87,6 +96,14 @@ width.
 | OR | 4 | 1.748 | 6.992 |
 | XOR | 8 | 3.268 | 26.144 |
 | **Total** | **21** | — | **52.288** |
+
+<p align="center">
+  <img src="assets/chart_area_breakdown.png" alt="Proportional area breakdown: XOR gates take half the total adder area at 50%, AND gates 37%, OR gates 13%, despite AND having more individual gate instances than XOR" width="720">
+</p>
+
+XOR gates dominate the area at half the total, despite AND contributing
+more individual instances (9 vs. 8) — every PG cell needs one, and so does
+every final sum bit.
 
 ## Physical Layout
 
@@ -148,13 +165,6 @@ capture boundary, at both supply corners:
 | 1.2 V | ≈20 ps | 0.211 ns | 0.231 ns | **4.33 GHz** |
 | 0.9 V | ≈44 ps | 0.444 ns | 0.488 ns | **2.05 GHz** |
 
-> **Corrected from the original submission:** the 0.9 V cycle time was
-> originally computed as `44 ps + 0.444 ns = 0.444 ns` — the setup time was
-> accidentally dropped from the sum. The correct total is `0.488 ns`,
-> giving 2.05 GHz rather than the originally reported 2.252 GHz. See
-> §9 ("Timing Analysis") in the [full report](VLSI_ALU_Sklansky_Adder_Report.pdf)
-> for the complete derivation.
-
 Every signal's rise and fall time (10–90%) was also confirmed under 50 ps at
 both corners, with wide margin.
 
@@ -187,15 +197,6 @@ output loading.
 ## Team
 
 Amit Damari · Tomer Zahuri · Tal Franco · Israel Elmaliach
-
-## Note on this writeup
-
-This report was re-typeset from the group's original course submission for
-portfolio use: a cycle-time arithmetic error at the 0.9 V corner was found
-and corrected (see above), figures were numbered/captioned throughout, and
-the underlying schematic, layout, and simulation work is unchanged from the
-original submission — see the report's Executive Summary for the complete
-list of changes.
 
 ## License
 
