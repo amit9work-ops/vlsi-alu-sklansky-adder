@@ -177,8 +177,8 @@ trade off against oscillation frequency.
 \textcolor{statusgood}{\textbf{\large\checkmark}}\ \textbf{LVS} -- clean, netlist match \\[10pt]
 \textbf{Adder cell area:} 52.29\,\textmu m\textsuperscript{2} (9 AND + 4 OR + 8 XOR) &
 \textbf{Layout utilization:} \(\approx\)97.5\% of the raw (unpadded) estimate\\[10pt]
-\textbf{f\textsubscript{max} @ 1.2\,V:} \textbf{4.37\,GHz} &
-\textbf{f\textsubscript{max} @ 0.9\,V:} \textbf{2.05\,GHz}\\[10pt]
+\textbf{f\textsubscript{max} @ 1.2\,V:} \textbf{4.27\,GHz} &
+\textbf{f\textsubscript{max} @ 0.9\,V:} \textbf{2.04\,GHz}\\[10pt]
 \textbf{Setup time:} \(\approx\)20\,ps @ 1.2\,V / 44\,ps @ 0.9\,V &
 \textbf{Rise/fall times:} all signals $<$ 50\,ps at both corners
 \end{tabular}
@@ -773,20 +773,31 @@ carry-out ($COUT$) to fully propagate and settle at the MSB.
 \fig{subtractor_delay_schematic}{0.85}{Testbench for measuring the
 combined $t_{CQ} + t_{sub,max}$ delay through the subtractor's $COUT$ path.}
 
+The two cursor pairs below sit on CLK edges a half-period apart, so they
+capture \emph{opposite-polarity} transitions of $COUT$ (one rising, one
+falling) -- not repeated samples of the same event. Rise and fall delays
+differ because pull-up/pull-down drive strength isn't symmetric, so the
+cycle time must accommodate whichever transition is slower: we take the
+\textbf{worst case (maximum)} of the two measured delays, not their
+average, since correctness on every cycle can't depend on which
+transition happened to occur.
+
 \textbf{At 1.2\,V:}
 \[
-t_{cq} + t_{sub,max} = \tfrac{1}{2}\left(0.2029\,\mathrm{ns} + 0.2143\,\mathrm{ns}\right) = 0.209\,\mathrm{ns}
+t_{cq} + t_{sub,max} = \max\left(0.2029\,\mathrm{ns},\ 0.2143\,\mathrm{ns}\right) = 0.2143\,\mathrm{ns}
 \]
 \fig{cout_delay_1p2v}{0.85}{$COUT$ delay measurement at 1.2\,V: cursors at
 30.2029\,ns and 50.2143\,ns bracket the 20\,ns clock half-period, giving
-the 0.2029/0.2143\,ns delays averaged above.}
+the 0.2029/0.2143\,ns rise/fall delays; the worst case (0.2143\,ns) sets
+the cycle time above.}
 
 \textbf{At 0.9\,V:}
 \fig{cout_delay_0p9v_b}{0.85}{$COUT$ delay measurement at 0.9\,V ($V_{DD}=900$\,mV
 trace amplitude): cursors at 30.4431\,ns and 50.4453\,ns give the
-0.4431/0.4453\,ns delays averaged below.}
+0.4431/0.4453\,ns rise/fall delays; the worst case (0.4453\,ns) sets the
+cycle time below.}
 \[
-t_{cq} + t_{sub,max} = \tfrac{1}{2}\left(0.443\,\mathrm{ns} + 0.4453\,\mathrm{ns}\right) = 0.444\,\mathrm{ns}
+t_{cq} + t_{sub,max} = \max\left(0.4431\,\mathrm{ns},\ 0.4453\,\mathrm{ns}\right) = 0.4453\,\mathrm{ns}
 \]
 
 \subsection{Maximum Frequency}
@@ -794,14 +805,14 @@ t_{cq} + t_{sub,max} = \tfrac{1}{2}\left(0.443\,\mathrm{ns} + 0.4453\,\mathrm{ns
 
 \textbf{At 1.2\,V:}
 \[
-T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 20\,\mathrm{ps} + 0.209\,\mathrm{ns} = 0.229\,\mathrm{ns}
-\ \Rightarrow\ f_{max} \approx 4.37\,\mathrm{GHz}
+T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 20\,\mathrm{ps} + 0.2143\,\mathrm{ns} = 0.2343\,\mathrm{ns}
+\ \Rightarrow\ f_{max} \approx 4.27\,\mathrm{GHz}
 \]
 
 \textbf{At 0.9\,V:}
 \[
-T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 44\,\mathrm{ps} + 0.444\,\mathrm{ns} = 0.488\,\mathrm{ns}
-\ \Rightarrow\ f_{max} \approx 2.05\,\mathrm{GHz}
+T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 44\,\mathrm{ps} + 0.4453\,\mathrm{ns} = 0.4893\,\mathrm{ns}
+\ \Rightarrow\ f_{max} \approx 2.04\,\mathrm{GHz}
 \]
 
 \begin{figure}[H]
@@ -825,14 +836,14 @@ T_{cyc} \ge T_{setup} + t_{cq} + t_{sub,max} = 44\,\mathrm{ps} + 0.444\,\mathrm{
 \addplot+[fill=accentblue,
   nodes near coords, point meta=explicit symbolic,
   every node near coord/.style={font=\scriptsize\bfseries, text=white}]
-  coordinates {(1.2 V,209) [209 ps] (0.9 V,444) [444 ps]};
+  coordinates {(1.2 V,214) [214 ps] (0.9 V,445) [445 ps]};
 \legend{Setup time, Logic delay $+\,t_{CQ}$}
 \node[font=\scriptsize\bfseries, color=accentblue, anchor=west] at (axis cs:1.2 V,20) [xshift=22pt] {20\,ps};
 \node[font=\scriptsize\bfseries, color=accentblue, anchor=west] at (axis cs:0.9 V,44) [xshift=22pt] {44\,ps};
-\node[font=\bfseries\large, color=accentorange] at (axis cs:1.2 V,340) {4.37 GHz};
-\node[font=\scriptsize, color=inksecondary] at (axis cs:1.2 V,295) {$T_{cyc}=229$\,ps};
-\node[font=\bfseries\large, color=accentorange] at (axis cs:0.9 V,540) {2.05 GHz};
-\node[font=\scriptsize, color=inksecondary] at (axis cs:0.9 V,495) {$T_{cyc}=488$\,ps};
+\node[font=\bfseries\large, color=accentorange] at (axis cs:1.2 V,340) {4.27 GHz};
+\node[font=\scriptsize, color=inksecondary] at (axis cs:1.2 V,295) {$T_{cyc}=234$\,ps};
+\node[font=\bfseries\large, color=accentorange] at (axis cs:0.9 V,540) {2.04 GHz};
+\node[font=\scriptsize, color=inksecondary] at (axis cs:0.9 V,495) {$T_{cyc}=489$\,ps};
 \end{axis}
 \end{tikzpicture}
 \caption{Cycle-time budget at each corner: each bar is literally
@@ -854,7 +865,7 @@ lower $V_{DD}$ reduces the average drive current $I_{AVG}$ available to
 charge/discharge the same node capacitance $C$, which lengthens every gate
 delay and pulls $f_{max}$ down.
 
-\fig{alu_full_sim_4p33ghz}{0.92}{Full ALU simulated at 1.2\,V near $f_{max}$ (4.33\,GHz target, $T_{cyc}=0.21$\,ns; the corrected $f_{max}$ from \S\ref{sec:fmax} is 4.37\,GHz): $A$, $B$, $X$, $C$, and $Y$ tracking correctly cycle-to-cycle.}
+\fig{alu_full_sim_4p33ghz}{0.92}{Full ALU simulated at 1.2\,V near $f_{max}$ (4.33\,GHz target, $T_{cyc}=0.21$\,ns; the corrected worst-case $f_{max}$ from \S\ref{sec:fmax} is 4.27\,GHz): $A$, $B$, $X$, $C$, and $Y$ tracking correctly cycle-to-cycle.}
 
 \subsection{Rise / Fall Times}
 Rise time (10\%--90\%) and fall time (90\%--10\%) were measured for every
@@ -985,8 +996,8 @@ verified against dedicated testbenches, with the full datapath additionally
 exercised end-to-end including its signed-overflow boundaries -- and its
 physical implementation is signoff-clean (DRC and LVS both pass with zero
 violations). The Sklansky adder's parallel-prefix structure delivers a
-measured $f_{max}$ of \textbf{4.37\,GHz at 1.2\,V}, degrading to
-\textbf{2.05\,GHz at 0.9\,V} as reduced drive current lengthens
+measured $f_{max}$ of \textbf{4.27\,GHz at 1.2\,V}, degrading to
+\textbf{2.04\,GHz at 0.9\,V} as reduced drive current lengthens
 every stage's propagation delay -- the same physical mechanism explored
 independently in the Part 2 ring-oscillator study, where inverter sizing
 and output loading traded off against $f_{osc}$ in exactly the same

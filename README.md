@@ -12,8 +12,8 @@ sizing and loading.
 [![Simulator](https://img.shields.io/badge/Simulator-Spectre-0068B5)]()
 [![DRC](https://img.shields.io/badge/DRC-clean-1A7A4A)]()
 [![LVS](https://img.shields.io/badge/LVS-clean-1A7A4A)]()
-[![fmax @ 1.2V](https://img.shields.io/badge/fmax%20%40%201.2V-4.37%20GHz-E67E22)]()
-[![fmax @ 0.9V](https://img.shields.io/badge/fmax%20%40%200.9V-2.05%20GHz-E67E22)]()
+[![fmax @ 1.2V](https://img.shields.io/badge/fmax%20%40%201.2V-4.27%20GHz-E67E22)]()
+[![fmax @ 0.9V](https://img.shields.io/badge/fmax%20%40%200.9V-2.04%20GHz-E67E22)]()
 
 <p align="center">
   <img src="assets/layout_zoom2.png" alt="Colorful standard-cell layout detail of the 4-bit Sklansky adder in Cadence Virtuoso, showing metal routing and vias across the PG/Gray/Black cell rows" width="880">
@@ -23,7 +23,7 @@ sizing and loading.
 
 ## At a Glance
 
-**4.37 GHz** f<sub>max</sub> @ 1.2 V · **2.05 GHz** f<sub>max</sub> @ 0.9 V ·
+**4.27 GHz** f<sub>max</sub> @ 1.2 V · **2.04 GHz** f<sub>max</sub> @ 0.9 V ·
 **52.29 µm²** adder cell area · **0** DRC violations · **0** LVS mismatches ·
 all signal rise/fall times **< 50 ps** at both corners
 
@@ -147,7 +147,7 @@ partial sum latched into `X`; **3rd** — the final result, after subtracting
 ## Timing: Critical Path & Voltage Impact
 
 <p align="center">
-  <img src="assets/chart_fmax_vs_vdd.png" alt="Stacked bar chart showing the cycle-time budget at each voltage corner: setup time plus combined logic delay and clock-to-Q, stacked to total 229ps at 1.2V (4.37 GHz) and 488ps at 0.9V (2.05 GHz)" width="520">
+  <img src="assets/chart_fmax_vs_vdd.png" alt="Stacked bar chart showing the cycle-time budget at each voltage corner: setup time plus combined logic delay and clock-to-Q, stacked to total 234ps at 1.2V (4.27 GHz) and 489ps at 0.9V (2.04 GHz)" width="520">
 </p>
 
 Rather than just showing the fmax outcome, each bar above is literally
@@ -162,8 +162,8 @@ capture boundary, at both supply corners:
 
 | Corner | Setup time | Combined logic + t<sub>CQ</sub> | Cycle time | f<sub>max</sub> |
 |---|---|---|---|---|
-| 1.2 V | ≈20 ps | 0.209 ns | 0.229 ns | **4.37 GHz** |
-| 0.9 V | ≈44 ps | 0.444 ns | 0.488 ns | **2.05 GHz** |
+| 1.2 V | ≈20 ps | 0.2143 ns | 0.2343 ns | **4.27 GHz** |
+| 0.9 V | ≈44 ps | 0.4453 ns | 0.4893 ns | **2.04 GHz** |
 
 Every signal's rise and fall time (10–90%) was also confirmed under 50 ps at
 both corners, with wide margin.
