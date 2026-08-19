@@ -388,7 +388,7 @@ three logic cells:
 \draw[wire] (l1a.south) -- (busJ);
 \fill[accentblue] (busJ) circle (1.3pt);
 \draw[wire] (busJ) -- (4.5,-4.2) -- (l2a.north);
-\draw[wire] (busJ) -- (4.5,-4.2) -- (5.7,-4.2) arc (180:0:0.18) -- (6.7,-4.2) -- (6.7,-6.6) -- (l2b.west);
+\draw[wire] (busJ) -- (4.5,-4.2) -- (5.82,-4.2) arc (180:0:0.18) -- (6.7,-4.2) -- (6.7,-6.6) -- (l2b.west);
 \node[siglabel] at (3, -4.2) {$G_{0:1}$};
 \node[siglabel, anchor=east] at (6.6, -5.4) {$G_{0:1}$};
 
@@ -865,7 +865,7 @@ lower $V_{DD}$ reduces the average drive current $I_{AVG}$ available to
 charge/discharge the same node capacitance $C$, which lengthens every gate
 delay and pulls $f_{max}$ down.
 
-\fig{alu_full_sim_4p33ghz}{0.92}{Full ALU simulated at 1.2\,V near $f_{max}$ (4.33\,GHz target, $T_{cyc}=0.21$\,ns; the corrected worst-case $f_{max}$ from \S\ref{sec:fmax} is 4.27\,GHz): $A$, $B$, $X$, $C$, and $Y$ tracking correctly cycle-to-cycle.}
+\fig{alu_full_sim_4p33ghz}{0.92}{Full ALU simulated at 1.2\,V near $f_{max}$ (4.33\,GHz target, $T_{cyc}\approx0.231$\,ns; the corrected worst-case $f_{max}$ from \S\ref{sec:fmax} is 4.27\,GHz): $A$, $B$, $X$, $C$, and $Y$ tracking correctly cycle-to-cycle.}
 
 \subsection{Rise / Fall Times}
 Rise time (10\%--90\%) and fall time (90\%--10\%) were measured for every
